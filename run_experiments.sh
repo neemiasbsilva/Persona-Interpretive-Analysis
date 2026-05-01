@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# run_experiments.sh — Execute the full percepta-urbana pipeline in order.
+#
+# Usage:
+#   ./run_experiments.sh            # run all notebooks + figure generation
+#   ./run_experiments.sh --force    # clear caches first, force full recompute
+#
+# Requires: uv (https://github.com/astral-sh/uv)
+# Outputs are cached in outputs/; figures land in figures/.
+# Re-running without --force skips cached steps automatically.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+NB_DIR="notebooks"
+LOG_DIR="outputs/logs"
+mkdir -p "$LOG_DIR"
+
+TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
+LOGFILE="$LOG_DIR/run_${TIMESTAMP}.log"
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+log()  { echo "[$(date '+%H:%M:%S')] $*" | tee -a "$LOGFILE"; }
+die()  { echo "ERROR: $*" >&2; exit 1; }
+
+# ── Option parsing ────────────────────────────────────────────────────────────
+FORCE=0
+for arg in "$@"; do
+    [[ "$arg" == "--force" ]] && FORCE=1
+done
+
+if [[ $FORCE -eq 1 ]]; then
+    log "WARNING: --force flag set. Removing embedding and similarity caches..."
+    rm -f outputs/caption_embeddings.npy outputs/justification_embeddings.npy
+    rm -f outputs/per_image_cosine_similarity.csv
+    rm -f outputs/per_image_just_similarity.csv
+    rm -f outputs/per_persona_cosine_similarity.csv
+    rm -f outputs/within_cross_persona_sim.csv
+    rm -f outputs/within_profile_coherence.csv
+    rm -f outputs/profile_sim_matrix_caption.npy
+    rm -f outputs/profile_sim_matrix_just.npy
+    rm -f outputs/roberta_justifications.csv
+    log "Caches cleared."
+fi
+
+# ── Check dependencies ────────────────────────────────────────────────────────
+log "Checking dependencies..."
+command -v uv >/dev/null 2>&1 || die "uv not found. Install: curl -LsSf https://astral.sh/uv/install.sh | sh"
+uv run jupyter --version >/dev/null 2>&1 || die "jupyter not found in uv env. Install: uv pip install jupyter nbconvert"
+uv run python -c "import src.config" 2>/dev/null || die "src/ package not importable. Run from project root."
+
+# ── Run notebooks ─────────────────────────────────────────────────────────────
+NOTEBOOKS=(
+    "01_eda_captions_justifications.ipynb"
+    "02_sentiment_analysis_justifications.ipynb"
+    "03_text_similarity_captions.ipynb"
+    "04_topic_modeling_bertopic.ipynb"
+    "05_convergence_analysis.ipynb"
+)
+
+for nb in "${NOTEBOOKS[@]}"; do
+    log "Running $nb ..."
+    uv run jupyter nbconvert \
+        --to notebook \
+        --execute \
+        --inplace \
+        --ExecutePreprocessor.timeout=3600 \
+        --ExecutePreprocessor.kernel_name=python3 \
+        "$NB_DIR/$nb" \
+        >> "$LOGFILE" 2>&1 \
+        && log "  DONE: $nb" \
+        || { log "  FAILED: $nb — check $LOGFILE"; exit 1; }
+done
+
+# ── Generate standalone figures ───────────────────────────────────────────────
+log "Generating standalone figures (src/generate_figures.py) ..."
+uv run python -m src.generate_figures >> "$LOGFILE" 2>&1 \
+    && log "  DONE: src/generate_figures.py" \
+    || { log "  FAILED: src/generate_figures.py — check $LOGFILE"; exit 1; }
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+log ""
+log "Pipeline complete. Figures in figures/:"
+ls figures/fig_*.pdf 2>/dev/null | sed 's/^/  /' | tee -a "$LOGFILE" || true
+log ""
+log "Full log: $LOGFILE"

@@ -16,3 +16,4 @@ data/raw_images/
 *.bin
 *.safetensors
 .DS_Store
+logs/
