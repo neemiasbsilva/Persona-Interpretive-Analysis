@@ -1,0 +1,25 @@
+profile,n_agents,caption_coherence,justification_coherence,perception_jaccard
+Female / High income / Conservative / Analytical,2495,0.23382514715194702,0.27205005288124084,0.0
+Female / High income / Conservative / Empathetic,2481,0.2364029437303543,0.25254303216934204,0.0
+Female / High income / Conservative / Pragmatic,2489,0.233554869890213,0.26170584559440613,0.0
+Female / High income / Progressive / Analytical,2490,0.23588094115257263,0.2809889018535614,0.0
+Female / High income / Progressive / Empathetic,2488,0.232998788356781,0.29569536447525024,0.0
+Female / High income / Progressive / Pragmatic,2489,0.23455536365509033,0.2670325040817261,0.0
+Female / Low income / Conservative / Analytical,2481,0.23740021884441376,0.2486162781715393,0.0
+Female / Low income / Conservative / Empathetic,2485,0.24038615822792053,0.26904866099357605,0.0
+Female / Low income / Conservative / Pragmatic,2494,0.23822945356369019,0.2561500668525696,0.0
+Female / Low income / Progressive / Analytical,2491,0.2326018214225769,0.3202355206012726,0.0
+Female / Low income / Progressive / Empathetic,2485,0.23623353242874146,0.33102476596832275,0.0
+Female / Low income / Progressive / Pragmatic,2487,0.2337619811296463,0.2999638020992279,0.0
+Male / High income / Conservative / Analytical,2481,0.23286044597625732,0.27180325984954834,0.0
+Male / High income / Conservative / Empathetic,2480,0.2364085465669632,0.255454957485199,0.0
+Male / High income / Conservative / Pragmatic,2493,0.23339243233203888,0.25935423374176025,0.0
+Male / High income / Progressive / Analytical,2490,0.23531654477119446,0.2716080844402313,0.0
+Male / High income / Progressive / Empathetic,2488,0.23626478016376495,0.2928771376609802,0.0
+Male / High income / Progressive / Pragmatic,2495,0.23675987124443054,0.2653040885925293,0.0
+Male / Low income / Conservative / Analytical,2493,0.23892194032669067,0.25246649980545044,0.0
+Male / Low income / Conservative / Empathetic,2481,0.23956292867660522,0.2656700909137726,0.0
+Male / Low income / Conservative / Pragmatic,2495,0.23699630796909332,0.2532716691493988,0.0
+Male / Low income / Progressive / Analytical,2483,0.23444344103336334,0.3018670976161957,0.0
+Male / Low income / Progressive / Empathetic,2483,0.23594452440738678,0.32545241713523865,0.0
+Male / Low income / Progressive / Pragmatic,2491,0.2331734299659729,0.29551807045936584,0.0
