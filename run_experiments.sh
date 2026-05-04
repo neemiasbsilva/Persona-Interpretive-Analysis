@@ -34,13 +34,14 @@ done
 if [[ $FORCE -eq 1 ]]; then
     log "WARNING: --force flag set. Removing embedding and similarity caches..."
     rm -f outputs/caption_embeddings.npy outputs/justification_embeddings.npy
+    rm -f outputs/caption_embeddings_ids.csv outputs/justification_embeddings_ids.csv
     rm -f outputs/per_image_cosine_similarity.csv
     rm -f outputs/per_image_just_similarity.csv
     rm -f outputs/per_persona_cosine_similarity.csv
     rm -f outputs/within_cross_persona_sim.csv
     rm -f outputs/within_profile_coherence.csv
-    rm -f outputs/profile_sim_matrix_caption.npy
-    rm -f outputs/profile_sim_matrix_just.npy
+    rm -f outputs/ic_profile_sim_caption.npy outputs/ic_profile_sim_just.npy
+    rm -f outputs/ic_profile_sim_labels.csv
     rm -f outputs/roberta_justifications.csv
     log "Caches cleared."
 fi

@@ -192,24 +192,29 @@ def compute_profile_coherence(
         cap_med  = float(np.median(cosine_similarity(cap_sub)[tri]))
         just_med = float(np.median(cosine_similarity(just_sub)[tri]))
 
-        perc_sets = []
-        for pp in grp["predicted_perceptions"]:
+        import ast as _ast
+        def _to_set(pp):
             if isinstance(pp, list):
-                perc_sets.append(set(pp))
-            elif isinstance(pp, str):
+                return set(pp)
+            if isinstance(pp, str):
                 try:
-                    import ast
-                    perc_sets.append(set(ast.literal_eval(pp)))
+                    return set(_ast.literal_eval(pp))
                 except Exception:
-                    perc_sets.append(set())
-            else:
-                perc_sets.append(set())
+                    pass
+            return set()
 
-        jac_vals = []
-        for a, b in combinations(perc_sets, 2):
-            union = len(a | b)
-            jac_vals.append(len(a & b) / union if union > 0 else 0.0)
-        perc_jac = float(np.median(jac_vals)) if jac_vals else float("nan")
+        img_jac_medians = []
+        for _, img_grp in grp.groupby("image_id"):
+            img_sets = [_to_set(pp) for pp in img_grp["predicted_perceptions"]]
+            if len(img_sets) < 2:
+                continue
+            jac_vals = []
+            for a, b in combinations(img_sets, 2):
+                union = len(a | b)
+                jac_vals.append(len(a & b) / union if union > 0 else 0.0)
+            if jac_vals:
+                img_jac_medians.append(float(np.median(jac_vals)))
+        perc_jac = float(np.median(img_jac_medians)) if img_jac_medians else float("nan")
 
         rows.append({
             "profile":                profile,
