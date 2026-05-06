@@ -9,17 +9,31 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import seaborn as sns
+from matplotlib.ticker import FuncFormatter
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
 
-# Shared heatmap colormap and scale for every heatmap in the paper
-HEATMAP_CMAP = sns.color_palette("rocket", as_cmap=True)
-HEATMAP_VMIN, HEATMAP_VMAX = 0.0, 1.0
+HEATMAP_CMAP = "Reds"
+
+_TOPIC_LABELS = {
+    0: "Natural landscape & beauty",
+    1: "Work & development",
+    2: "Accident & police response",
+    3: "Rural & quiet road",
+    4: "Historical & preserved",
+    5: "Destruction & conflict",
+    6: "Streets & orderly urban",
+    7: "City & nature",
+    8: "Home & peaceful scene",
+    9: "Typical urban scene",
+}
 
 from .config import FIGURES, OUTPUTS, FONT_SCALE, SENT_COLORS_3
 from .data_loading import load_annotations, parse_demographics, create_profiles
 from .embeddings import build_id_index
-from .similarity import compute_profile_coherence, compute_image_conditioned_profile_sim
-from .topic_modeling import topic_sentiment_composition
+from .similarity import compute_image_conditioned_profile_sim
 
 
 def _abbrev(p: str) -> str:
@@ -28,11 +42,9 @@ def _abbrev(p: str) -> str:
 
 
 def main() -> None:
-    sns.set_theme(font_scale=FONT_SCALE)
+    sns.set_theme(style="whitegrid", font_scale=FONT_SCALE)
     FIGURES.mkdir(exist_ok=True)
-    MUTED = sns.color_palette("muted")
 
-    # ── Load data ─────────────────────────────────────────────────────────────
     print("Loading annotations...")
     df = load_annotations()
     df = parse_demographics(df)
@@ -44,166 +56,122 @@ def main() -> None:
     just_embs = np.load(OUTPUTS / "justification_embeddings.npy")
     cap_idx   = build_id_index(OUTPUTS / "caption_embeddings_ids.csv")
 
-    # ── Fig 1: justification similarity by sentiment ───────────────────────────
-    print("\n[1] fig_sim_by_sentiment_just ...")
-    just_sim_df = pd.read_csv(OUTPUTS / "per_image_just_similarity.csv")
-    img_sent = (
-        df.groupby("image_id")["predicted_sentiment"]
-        .agg(lambda x: x.mode().iloc[0])
-        .reset_index()
-        .rename(columns={"predicted_sentiment": "majority_sentiment"})
-    )
-    just_sim_sent = just_sim_df.merge(img_sent, on="image_id")
-    order = ["Positive", "Neutral", "Negative"]
-    fig, ax = plt.subplots(figsize=(7, 5))
-    sns.boxplot(
-        data=just_sim_sent[just_sim_sent["majority_sentiment"].isin(order)],
-        x="majority_sentiment", y="mean_just_sim", order=order,
-        hue="majority_sentiment", palette=SENT_COLORS_3, legend=False, ax=ax,
-    )
-    ax.set_xlabel("Majority predicted sentiment (per image)")
-    ax.set_ylabel("Mean pairwise cosine similarity (justifications)")
-    ax.tick_params(axis="x", rotation=15)
+    # ── Fig 1: topic × persona profile heatmap (justifications) ─────────────
+    print("\n[1] fig_topic_persona_heatmap_just ...")
+    ann_topics = pd.read_csv(OUTPUTS / "annotations_with_topics.csv")
+    merged_tp  = ann_topics.merge(
+        df[["annotation_id", "profile_abbr"]], on="annotation_id", how="left"
+    ).dropna(subset=["profile_abbr"])
+
+    labeled_topics = list(_TOPIC_LABELS.keys())
+    tp    = (merged_tp[merged_tp["just_topic"].isin(labeled_topics)]
+             .groupby(["just_topic", "profile_abbr"]).size().reset_index(name="count"))
+    piv   = tp.pivot(index="just_topic", columns="profile_abbr", values="count").fillna(0)
+    piv_n = piv.div(piv.sum(axis=0), axis=1)
+    piv_n.index = [_TOPIC_LABELS[i] for i in piv_n.index]
+
+    fig, ax = plt.subplots(figsize=(18, 7))
+    sns.heatmap(piv_n, ax=ax, cmap=HEATMAP_CMAP,
+                vmin=piv_n.values.min(), vmax=piv_n.values.max(),
+                annot=True, fmt=".2f", annot_kws={"fontsize": 5.5},
+                linewidths=0.3, linecolor="white",
+                cbar_kws={"label": "Topic proportion", "shrink": 0.6})
+    ax.set_xlabel("Persona", fontsize=11)
+    ax.set_ylabel("Topic", fontsize=11)
+    ax.tick_params(axis="x", rotation=90, labelsize=7)
+    ax.tick_params(axis="y", rotation=0,  labelsize=9)
     plt.tight_layout()
-    fig.savefig(FIGURES / "fig_sim_by_sentiment_just.pdf", bbox_inches="tight")
-    fig.savefig(FIGURES / "fig_sim_by_sentiment_just.png", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_topic_persona_heatmap_just.pdf", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_topic_persona_heatmap_just.png", bbox_inches="tight")
     plt.close()
     print("  Saved.")
 
-    # ── Figs 2-3: within-profile coherence barplot + heatmap ─────────────────
-    print("\n[2-3] fig_within_profile_coherence ...")
-    WP_CACHE = OUTPUTS / "within_profile_coherence.csv"
-    wp_df = compute_profile_coherence(df, cap_embs, just_embs, cap_idx, WP_CACHE)
-    print(f"  {len(wp_df)} profiles")
+    # ── Fig 2: justification topic × sentiment composition ──────────────────
+    print("\n[2] fig_topic_just_sentiment_composition ...")
+    order3 = ["Positive", "Neutral", "Negative"]
+    sent_tp = ann_topics[ann_topics["just_topic"].isin(labeled_topics)
+                         & ann_topics["predicted_sentiment"].isin(order3)]
+    pivot = (sent_tp.groupby(["just_topic", "predicted_sentiment"]).size()
+             .reset_index(name="count")
+             .pivot(index="just_topic", columns="predicted_sentiment", values="count")
+             .fillna(0))
+    pivot_norm = pivot.div(pivot.sum(axis=1), axis=0)[order3]
+    pivot_norm.index = [_TOPIC_LABELS[i] for i in pivot_norm.index]
+    pivot_norm = pivot_norm.sort_values("Negative", ascending=True)
 
-    metrics = [
-        ("caption_coherence",       "Median pairwise cosine similarity\n(captions)"),
-        ("justification_coherence", "Median pairwise cosine similarity\n(justifications)"),
-        ("perception_jaccard",      "Median pairwise Jaccard\n(perception tags)"),
-    ]
-
-    wp_plot = wp_df.sort_values("caption_coherence", ascending=True)
-    sorted_profiles = wp_plot["profile"].tolist()
-    # same label style as the coherence heatmap
-    bar_labels = [" · ".join(x.strip()[:5] for x in p.split("/")) for p in sorted_profiles]
-    y_pos = list(range(len(sorted_profiles)))
-
-    # compute shared x-axis range across all 3 metrics
-    all_vals = []
-    for col, _ in metrics:
-        all_vals.extend(wp_plot[col].dropna().values)
-    g_min, g_max = min(all_vals), max(all_vals)
-    margin = (g_max - g_min) * 0.05
-    shared_xlim = (max(0.0, g_min - margin), g_max + margin)
-
-    n_profiles = len(sorted_profiles)
-    fig, axes = plt.subplots(1, 3, figsize=(22, 10))
-    for ax_i, (ax, (col, xlabel)) in enumerate(zip(axes, metrics)):
-        vals = wp_plot.set_index("profile").loc[sorted_profiles, col]
-        ax.barh(y_pos, vals.values, color=MUTED[0], edgecolor="white", linewidth=0.4)
-        ax.set_xlabel(xlabel, fontsize=10)
-        ax.set_xlim(shared_xlim)
-        ax.set_ylim(-0.5, n_profiles - 0.5)
-        ax.set_yticks(y_pos)
-        if ax_i == 0:
-            ax.set_yticklabels(bar_labels, fontsize=8)
-        else:
-            ax.set_yticklabels([])
-        ax.tick_params(axis="x", labelsize=8)
-        mean_val = vals.mean()
-        ax.axvline(mean_val, color="#d73027", linestyle="--", linewidth=1.2,
-                   label=f"Mean={mean_val:.3f}")
-        ax.legend(fontsize=8, loc="lower right")
-    plt.tight_layout()
-    fig.savefig(FIGURES / "fig_within_profile_coherence.pdf", bbox_inches="tight")
-    fig.savefig(FIGURES / "fig_within_profile_coherence.png", bbox_inches="tight")
-    plt.close()
-
-    wp_sorted = wp_df.sort_values("caption_coherence", ascending=False).copy()
-    wp_sorted["short_label"] = wp_sorted["profile"].apply(
-        lambda p: " · ".join(x.strip()[:5] for x in p.split("/")))
-    hm_data = wp_sorted.set_index("short_label")[
-        ["caption_coherence", "justification_coherence", "perception_jaccard"]]
-    hm_data.columns = ["Caption\ncoherence", "Justif.\ncoherence", "Perception\nJaccard"]
-    fig, ax = plt.subplots(figsize=(8, 10))
-    sns.heatmap(hm_data, ax=ax, cmap=HEATMAP_CMAP,
-                vmin=HEATMAP_VMIN, vmax=HEATMAP_VMAX,
-                annot=True, fmt=".3f",
-                linewidths=0.4, linecolor="white",
-                cbar_kws={"label": "Median coherence score", "shrink": 0.6},
-                annot_kws={"size": 8})
-    ax.set_ylabel("")
-    ax.tick_params(axis="y", labelsize=8)
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+    left = np.zeros(len(pivot_norm))
+    for col, color in zip(order3, [SENT_COLORS_3[c] for c in order3]):
+        vals = pivot_norm[col].values
+        ax.barh(range(len(pivot_norm)), vals, left=left,
+                color=color, label=col, height=0.62,
+                edgecolor="white", linewidth=0.5)
+        for i, (val, l) in enumerate(zip(vals, left)):
+            if val > 0.09:
+                ax.text(l + val / 2, i, f"{val:.0%}",
+                        ha="center", va="center", fontsize=9,
+                        color="white", fontweight="bold")
+        left += vals
+    ax.set_yticks(range(len(pivot_norm)))
+    ax.set_yticklabels(pivot_norm.index, fontsize=11)
+    ax.set_xlabel("Proportion", fontsize=11)
+    ax.set_xlim(0, 1.0)
+    ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.0%}"))
     ax.tick_params(axis="x", labelsize=10)
+    ax.xaxis.grid(True, linestyle="--", alpha=0.35, color="gray", zorder=0)
+    ax.set_axisbelow(True)
+    ax.spines[["top", "right", "left"]].set_visible(False)
+    ax.tick_params(axis="y", length=0)
+    ax.legend(title="Sentiment", bbox_to_anchor=(1.01, 0.5), loc="center left",
+              fontsize=10, title_fontsize=10, framealpha=0.9)
     plt.tight_layout()
-    fig.savefig(FIGURES / "fig_within_profile_coherence_heatmap.pdf", bbox_inches="tight")
-    fig.savefig(FIGURES / "fig_within_profile_coherence_heatmap.png", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_topic_just_sentiment_composition.pdf", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_topic_just_sentiment_composition.png", bbox_inches="tight")
     plt.close()
     print("  Saved.")
 
-    # ── Fig 4: caption topic × sentiment composition ──────────────────────────
-    print("\n[6] fig_topic_caption_sentiment_composition ...")
-    ann_topics     = pd.read_csv(OUTPUTS / "annotations_with_topics.csv")
-    cap_topic_info = pd.read_csv(OUTPUTS / "caption_topic_info.csv")
+    # ── Fig 3: t-SNE of persona profiles in topic-distribution space ─────────
+    print("\n[3] fig_persona_topic_tsne ...")
+    piv_tsne = piv_n.T  # (n_profiles × n_topics)
+    profiles_list = piv_tsne.index.tolist()
+    X = StandardScaler().fit_transform(piv_tsne.values)
+    emb = TSNE(n_components=2, perplexity=5, random_state=42, max_iter=2000).fit_transform(X)
 
-    pivot_cap_norm = topic_sentiment_composition(ann_topics, "caption_topic", top_n=10)
-    fig, ax = plt.subplots(figsize=(10, 6))
-    pivot_cap_norm[["Positive", "Neutral", "Negative"]].plot(
-        kind="bar", stacked=True, ax=ax,
-        color=[SENT_COLORS_3["Positive"], SENT_COLORS_3["Neutral"], SENT_COLORS_3["Negative"]],
-    )
-    ax.set_xlabel("Caption topic ID")
-    ax.set_ylabel("Proportion")
-    ax.legend(title="Predicted sentiment", bbox_to_anchor=(1.01, 1), loc="upper left")
-    ax.tick_params(axis="x", rotation=0)
-    for bar_stack in ax.containers:
-        ax.bar_label(bar_stack, fmt=lambda v: f"{v:.0%}" if v > 0.08 else "",
-                     label_type="center", fontsize=8, color="white", fontweight="bold")
+    def _parse_profile(p):
+        parts = [x.strip() for x in p.split("/")]
+        econ  = "High" if any("High" in x or "high" in x for x in parts) else "Low"
+        polit = "Con"  if any("Con"  in x or "con"  in x.lower() for x in parts) else "Pro"
+        return econ, polit
+
+    attrs      = [_parse_profile(p) for p in profiles_list]
+    econ_vals  = [a[0] for a in attrs]
+    polit_vals = [a[1] for a in attrs]
+    econ_colors  = {"High": "#2166ac", "Low": "#d73027"}
+    polit_shapes = {"Con": "^", "Pro": "o"}
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for i, (prof, econ, polit) in enumerate(zip(profiles_list, econ_vals, polit_vals)):
+        ax.scatter(emb[i, 0], emb[i, 1],
+                   c=econ_colors[econ], marker=polit_shapes[polit],
+                   s=120, edgecolors="white", linewidths=0.6, zorder=3)
+    legend_handles = [
+        mpatches.Patch(color=econ_colors["High"], label="High income"),
+        mpatches.Patch(color=econ_colors["Low"],  label="Low income"),
+        plt.Line2D([0], [0], marker="^", color="gray", markersize=9, linestyle="", label="Conservative"),
+        plt.Line2D([0], [0], marker="o", color="gray", markersize=9, linestyle="", label="Progressive"),
+    ]
+    ax.legend(handles=legend_handles, fontsize=10, loc="best")
+    ax.set_xlabel("t-SNE dim 1")
+    ax.set_ylabel("t-SNE dim 2")
+    ax.grid(True, linestyle="--", alpha=0.3)
     plt.tight_layout()
-    fig.savefig(FIGURES / "fig_topic_caption_sentiment_composition.pdf", bbox_inches="tight")
-    fig.savefig(FIGURES / "fig_topic_caption_sentiment_composition.png", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_persona_topic_tsne.pdf", bbox_inches="tight")
+    fig.savefig(FIGURES / "fig_persona_topic_tsne.png", bbox_inches="tight")
     plt.close()
     print("  Saved.")
 
-    # ── Figs 7-8: topic × persona profile heatmaps ───────────────────────────
-    print("\n[7-8] fig_topic_persona_heatmap ...")
-    just_topic_info = pd.read_csv(OUTPUTS / "just_topic_info.csv")
-
-    merged_tp = ann_topics.merge(
-        df[["annotation_id", "profile_abbr"]], on="annotation_id", how="left")
-    merged_tp = merged_tp.dropna(subset=["profile_abbr"])
-
-    def _tp_heatmap(pivot_norm, fname, annot=False):
-        fig, ax = plt.subplots(figsize=(18, 7))
-        sns.heatmap(pivot_norm, ax=ax, cmap=HEATMAP_CMAP,
-                    vmin=HEATMAP_VMIN, vmax=HEATMAP_VMAX,
-                    annot=annot, fmt=".2f", annot_kws={"fontsize": 5.5},
-                    linewidths=0.3, linecolor="white",
-                    cbar_kws={"label": "Proportion of profile annotations", "shrink": 0.6})
-        ax.set_xlabel("Persona profile", fontsize=11)
-        ax.set_ylabel("Topic ID", fontsize=11)
-        ax.tick_params(axis="x", rotation=90, labelsize=7)
-        ax.tick_params(axis="y", rotation=0, labelsize=9)
-        plt.tight_layout()
-        fig.savefig(FIGURES / f"{fname}.pdf", bbox_inches="tight")
-        fig.savefig(FIGURES / f"{fname}.png", bbox_inches="tight")
-        plt.close()
-        print(f"  Saved {fname}")
-
-    for modality, tcol, info_df in [
-        ("caption", "caption_topic", cap_topic_info),
-        ("just",    "just_topic",    just_topic_info),
-    ]:
-        top = info_df[info_df["Topic"] != -1].head(15)["Topic"].tolist()
-        tp  = (merged_tp[merged_tp[tcol].isin(top)]
-               .groupby([tcol, "profile_abbr"]).size().reset_index(name="count"))
-        piv   = tp.pivot(index=tcol, columns="profile_abbr", values="count").fillna(0)
-        piv_n = piv.div(piv.sum(axis=0), axis=1)
-        _tp_heatmap(piv_n, f"fig_topic_persona_heatmap_{modality}",
-                    annot=(modality == "just"))
-
-    # ── Figs 9-10: image-conditioned cross-profile similarity ────────────────
-    print("\n[9-10] fig_cosine_cross_profile_heatmap ...")
+    # ── Figs 4-5: image-conditioned cross-profile cosine similarity ──────────
+    print("\n[2-3] fig_cosine_cross_profile_heatmap ...")
     ic_cap, ic_just, ic_labs = compute_image_conditioned_profile_sim(
         df, cap_embs, just_embs, cap_idx,
         cap_cache=OUTPUTS  / "ic_profile_sim_caption.npy",
@@ -215,29 +183,9 @@ def main() -> None:
           f"just [{ic_just.min():.3f}, {ic_just.max():.3f}]")
 
     short_labs = [_abbrev(p) for p in ic_labs]
-    for mat, fname in [
-        (ic_cap,  "fig_cosine_cross_profile_heatmap_caption"),
-        (ic_just, "fig_cosine_cross_profile_heatmap_just"),
-    ]:
-        mat_df = pd.DataFrame(mat, index=short_labs, columns=short_labs)
-        fig, ax = plt.subplots(figsize=(13, 10))
-        sns.heatmap(
-            mat_df, ax=ax, cmap=HEATMAP_CMAP,
-            vmin=HEATMAP_VMIN, vmax=HEATMAP_VMAX,
-            annot=True, fmt=".2f", annot_kws={"fontsize": 8},
-            linewidths=0.3, linecolor="white",
-            cbar_kws={"label": "Mean cosine similarity", "shrink": 0.7},
-        )
-        ax.tick_params(axis="x", rotation=45, labelsize=9)
-        ax.tick_params(axis="y", rotation=0,  labelsize=9)
-        plt.tight_layout()
-        fig.savefig(FIGURES / f"{fname}.pdf", bbox_inches="tight")
-        fig.savefig(FIGURES / f"{fname}.png", bbox_inches="tight")
-        plt.close()
-        print(f"  Saved {fname}")
 
-    # ── Fig 11: cross-profile perception Jaccard heatmap ─────────────────────
-    print("\n[11] fig_cross_profile_perception_jaccard ...")
+    # ── Compute Jaccard first so all three matrices are available for shared scale
+    print("\n[4] fig_cross_profile_perception_jaccard (computing) ...")
     JAC_CACHE = OUTPUTS / "ic_profile_sim_jaccard.npy"
     if JAC_CACHE.exists():
         jac_mat = np.load(JAC_CACHE)
@@ -260,10 +208,18 @@ def main() -> None:
         jac_mat = np.zeros((n, n))
         for i, pi in enumerate(profiles):
             for j, pj in enumerate(profiles):
-                if i == j:
-                    jac_mat[i, j] = 1.0
-                    continue
                 gi = df[df["profile"] == pi].groupby("image_id")["predicted_perceptions"].apply(list)
+                if i == j:
+                    vals = []
+                    for img in gi.index:
+                        si = [_tag_set(x) for x in gi[img]]
+                        if len(si) >= 2:
+                            pairs = [_jaccard(a, b) for idx_a, a in enumerate(si)
+                                     for idx_b, b in enumerate(si) if idx_a < idx_b]
+                            if pairs:
+                                vals.append(float(np.mean(pairs)))
+                    jac_mat[i, j] = float(np.mean(vals)) if vals else 0.0
+                    continue
                 gj = df[df["profile"] == pj].groupby("image_id")["predicted_perceptions"].apply(list)
                 shared = gi.index.intersection(gj.index)
                 vals = []
@@ -277,16 +233,44 @@ def main() -> None:
         np.save(JAC_CACHE, jac_mat)
         print(f"  Computed and cached. Range [{jac_mat.min():.3f}, {jac_mat.max():.3f}]")
 
+    # Shared scale across all three cross-profile matrices
+    all_vals = np.concatenate([ic_cap.ravel(), ic_just.ravel(), jac_mat.ravel()])
+    shared_vmin, shared_vmax = float(all_vals.min()), float(all_vals.max())
+    print(f"  Shared scale: [{shared_vmin:.3f}, {shared_vmax:.3f}]")
+
+    # ── Figs 2-3: cosine cross-profile heatmaps ──────────────────────────────
+    for mat, fname, cbar_label in [
+        (ic_cap,  "fig_cosine_cross_profile_heatmap_caption", "Mean cosine similarity"),
+        (ic_just, "fig_cosine_cross_profile_heatmap_just",    "Mean cosine similarity"),
+    ]:
+        mat_df = pd.DataFrame(mat, index=short_labs, columns=short_labs)
+        fig, ax = plt.subplots(figsize=(13, 10))
+        sns.heatmap(
+            mat_df, ax=ax, cmap=HEATMAP_CMAP,
+            vmin=shared_vmin, vmax=shared_vmax,
+            annot=True, fmt=".2f", annot_kws={"fontsize": 8},
+            linewidths=0.3, linecolor="white",
+            cbar_kws={"label": cbar_label, "shrink": 0.7},
+        )
+        ax.tick_params(axis="x", rotation=90, labelsize=9)
+        ax.tick_params(axis="y", rotation=0,  labelsize=9)
+        plt.tight_layout()
+        fig.savefig(FIGURES / f"{fname}.pdf", bbox_inches="tight")
+        fig.savefig(FIGURES / f"{fname}.png", bbox_inches="tight")
+        plt.close()
+        print(f"  Saved {fname}")
+
+    # ── Fig 4: Jaccard cross-profile heatmap ─────────────────────────────────
     jac_df = pd.DataFrame(jac_mat, index=short_labs, columns=short_labs)
     fig, ax = plt.subplots(figsize=(13, 10))
     sns.heatmap(
         jac_df, ax=ax, cmap=HEATMAP_CMAP,
-        vmin=0.0, vmax=1.0,
+        vmin=shared_vmin, vmax=shared_vmax,
         annot=True, fmt=".2f", annot_kws={"fontsize": 8},
         linewidths=0.3, linecolor="white",
         cbar_kws={"label": "Mean Jaccard similarity", "shrink": 0.7},
     )
-    ax.tick_params(axis="x", rotation=45, labelsize=9)
+    ax.tick_params(axis="x", rotation=90, labelsize=9)
     ax.tick_params(axis="y", rotation=0,  labelsize=9)
     plt.tight_layout()
     fig.savefig(FIGURES / "fig_cross_profile_perception_jaccard.pdf", bbox_inches="tight")

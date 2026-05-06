@@ -108,43 +108,67 @@ def compute_within_cross_similarity(
     demo_cols: list = _DEMO_COLS,
     cache_path: Optional[Path] = None,
 ) -> pd.DataFrame:
-    """Within-group vs. cross-group cosine similarity per demographic dimension.
+    """Within-group vs. cross-group similarity per demographic dimension.
+
+    Covers three modalities:
+      - caption       : cosine similarity of Sentence-BERT embeddings
+      - justification : cosine similarity of Sentence-BERT embeddings
+      - perception    : Jaccard similarity of perception tag sets
 
     Returns DataFrame with columns:
         image_id, dimension, modality, within_mean, cross_mean
     """
+    import ast as _ast
+
     cache_path = Path(cache_path) if cache_path else None
     if cache_path and cache_path.exists():
         return pd.read_csv(cache_path)
+
+    def _to_set(v):
+        if isinstance(v, list):
+            return set(v)
+        try:
+            return set(_ast.literal_eval(v))
+        except Exception:
+            return set()
+
+    def _jaccard(a, b):
+        u = len(a | b)
+        return len(a & b) / u if u > 0 else 0.0
 
     rows = []
     for img_id, grp in df.groupby("image_id"):
         idxs = [id_index[a] for a in grp["annotation_id"] if a in id_index]
         if len(idxs) < 2:
             continue
-        grp_r = grp.reset_index(drop=True)
+        grp_r    = grp.reset_index(drop=True)
         cap_sub  = cap_embs[idxs]
         just_sub = just_embs[idxs]
         sim_cap  = cosine_similarity(cap_sub)
         sim_just = cosine_similarity(just_sub)
+        tag_sets = [_to_set(v) for v in grp_r["predicted_perceptions"]]
 
         for dim in demo_cols:
             labels = grp_r[dim].tolist()
             within_cap, cross_cap   = [], []
             within_just, cross_just = [], []
+            within_jac, cross_jac   = [], []
             for i in range(len(idxs)):
                 for j in range(i + 1, len(idxs)):
                     same = labels[i] == labels[j]
                     if same:
                         within_cap.append(sim_cap[i, j])
                         within_just.append(sim_just[i, j])
+                        within_jac.append(_jaccard(tag_sets[i], tag_sets[j]))
                     else:
                         cross_cap.append(sim_cap[i, j])
                         cross_just.append(sim_just[i, j])
+                        cross_jac.append(_jaccard(tag_sets[i], tag_sets[j]))
 
             for modality, within, cross in [
                 ("caption",       within_cap,  cross_cap),
                 ("justification", within_just, cross_just),
+                ("perception",    within_jac,  cross_jac),
             ]:
                 rows.append({
                     "image_id":   img_id,
@@ -361,15 +385,24 @@ def compute_image_conditioned_profile_sim(
     n = len(profiles)
 
     # Build profile → {image_id → mean_embedding} lookup
-    cap_by  = {p: {} for p in profiles}
-    just_by = {p: {} for p in profiles}
+    # Also accumulate per-image within-profile pairwise sims for the diagonal.
+    cap_by       = {p: {} for p in profiles}
+    just_by      = {p: {} for p in profiles}
+    cap_diag_vals  = {p: [] for p in profiles}
+    just_diag_vals = {p: [] for p in profiles}
     for (prof, img), grp in df.groupby(["profile", "image_id"]):
         aids    = [a for a in grp["annotation_id"].tolist() if a in id_index]
         if not aids:
             continue
         idxs = [id_index[a] for a in aids]
-        cap_by[prof][img]  = cap_embs[idxs].mean(axis=0)
-        just_by[prof][img] = just_embs[idxs].mean(axis=0)
+        ce = cap_embs[idxs]
+        je = just_embs[idxs]
+        cap_by[prof][img]  = ce.mean(axis=0)
+        just_by[prof][img] = je.mean(axis=0)
+        if len(idxs) >= 2:
+            tri = np.triu_indices(len(idxs), k=1)
+            cap_diag_vals[prof].append(float(np.dot(ce, ce.T)[tri].mean()))
+            just_diag_vals[prof].append(float(np.dot(je, je.T)[tri].mean()))
 
     cap_mat  = np.zeros((n, n))
     just_mat = np.zeros((n, n))
@@ -377,7 +410,8 @@ def compute_image_conditioned_profile_sim(
     for i, p1 in enumerate(profiles):
         for j, p2 in enumerate(profiles):
             if i == j:
-                cap_mat[i, j] = just_mat[i, j] = 1.0
+                cap_mat[i, j]  = float(np.mean(cap_diag_vals[p1]))  if cap_diag_vals[p1]  else float("nan")
+                just_mat[i, j] = float(np.mean(just_diag_vals[p1])) if just_diag_vals[p1] else float("nan")
                 continue
             shared = list(set(cap_by[p1]) & set(cap_by[p2]))
             if not shared:
