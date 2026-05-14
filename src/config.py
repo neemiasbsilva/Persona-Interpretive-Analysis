@@ -14,7 +14,7 @@ EMBED_MODEL   = "sentence-transformers/all-MiniLM-L6-v2"
 ROBERTA_MODEL = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 
 # ── Plotting ──────────────────────────────────────────────────────────────────
-FONT_SCALE = 1.4
+FONT_SCALE = 1.8
 
 SENT_COLORS = {
     "Negative":         "#d73027",
