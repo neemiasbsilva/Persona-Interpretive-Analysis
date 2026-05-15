@@ -16,6 +16,10 @@ from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 
 HEATMAP_CMAP = "Reds"
+HEATMAP_ANNOT_FONT = 9.5
+HEATMAP_TICK_FONT = 11
+HEATMAP_CBAR_FONT = 12
+HEATMAP_CBAR_TICK_FONT = 11
 
 _TOPIC_LABELS = {
     0: "Natural landscape & beauty",
@@ -76,10 +80,10 @@ def main() -> None:
                 annot=True, fmt=".2f", annot_kws={"fontsize": 5.5},
                 linewidths=0.3, linecolor="white",
                 cbar_kws={"label": "Topic proportion", "shrink": 0.6})
-    ax.set_xlabel("Persona", fontsize=11)
-    ax.set_ylabel("Topic", fontsize=11)
-    ax.tick_params(axis="x", rotation=90, labelsize=7)
-    ax.tick_params(axis="y", rotation=0,  labelsize=9)
+    ax.set_xlabel("Persona", fontsize=14)
+    ax.set_ylabel("Topic", fontsize=14)
+    ax.tick_params(axis="x", rotation=90, labelsize=11, pad=1)
+    ax.tick_params(axis="y", rotation=0,  labelsize=11, pad=1)
     plt.tight_layout()
     fig.savefig(FIGURES / "fig_topic_persona_heatmap_just.pdf", bbox_inches="tight")
     fig.savefig(FIGURES / "fig_topic_persona_heatmap_just.png", bbox_inches="tight")
@@ -248,12 +252,15 @@ def main() -> None:
         sns.heatmap(
             mat_df, ax=ax, cmap=HEATMAP_CMAP,
             vmin=shared_vmin, vmax=shared_vmax,
-            annot=True, fmt=".2f", annot_kws={"fontsize": 8},
+            annot=True, fmt=".2f", annot_kws={"fontsize": HEATMAP_ANNOT_FONT},
             linewidths=0.3, linecolor="white",
             cbar_kws={"label": cbar_label, "shrink": 0.7},
         )
-        ax.tick_params(axis="x", rotation=90, labelsize=9)
-        ax.tick_params(axis="y", rotation=0,  labelsize=9)
+        ax.tick_params(axis="x", rotation=90, labelsize=HEATMAP_TICK_FONT)
+        ax.tick_params(axis="y", rotation=0,  labelsize=HEATMAP_TICK_FONT)
+        cbar = ax.collections[0].colorbar
+        cbar.ax.tick_params(labelsize=HEATMAP_CBAR_TICK_FONT)
+        cbar.set_label(cbar_label, fontsize=HEATMAP_CBAR_FONT)
         plt.tight_layout()
         fig.savefig(FIGURES / f"{fname}.pdf", bbox_inches="tight")
         fig.savefig(FIGURES / f"{fname}.png", bbox_inches="tight")
@@ -266,12 +273,15 @@ def main() -> None:
     sns.heatmap(
         jac_df, ax=ax, cmap=HEATMAP_CMAP,
         vmin=shared_vmin, vmax=shared_vmax,
-        annot=True, fmt=".2f", annot_kws={"fontsize": 8},
+        annot=True, fmt=".2f", annot_kws={"fontsize": HEATMAP_ANNOT_FONT},
         linewidths=0.3, linecolor="white",
         cbar_kws={"label": "Mean Jaccard similarity", "shrink": 0.7},
     )
-    ax.tick_params(axis="x", rotation=90, labelsize=9)
-    ax.tick_params(axis="y", rotation=0,  labelsize=9)
+    ax.tick_params(axis="x", rotation=90, labelsize=HEATMAP_TICK_FONT)
+    ax.tick_params(axis="y", rotation=0,  labelsize=HEATMAP_TICK_FONT)
+    cbar = ax.collections[0].colorbar
+    cbar.ax.tick_params(labelsize=HEATMAP_CBAR_TICK_FONT)
+    cbar.set_label("Mean Jaccard similarity", fontsize=HEATMAP_CBAR_FONT)
     plt.tight_layout()
     fig.savefig(FIGURES / "fig_cross_profile_perception_jaccard.pdf", bbox_inches="tight")
     fig.savefig(FIGURES / "fig_cross_profile_perception_jaccard.png", bbox_inches="tight")
