@@ -10,7 +10,6 @@ build/
 # outputs/*.jsonl
 # outputs/*.csv
 outputs/*.pkl
-outputs/*npy
 data/raw_images/
 *.pt
 *.bin
