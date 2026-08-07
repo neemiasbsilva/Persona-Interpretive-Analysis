@@ -1,0 +1,226 @@
+{
+  "matched_factorial_contrast|economic_status|justification|caption": [
+    42,
+    3929314781,
+    3517457564,
+    1806566112,
+    482233636
+  ],
+  "matched_factorial_contrast|gender|justification|caption": [
+    42,
+    3082416331,
+    900662355,
+    3095199552,
+    2927966687
+  ],
+  "matched_factorial_contrast|personality|justification|caption": [
+    42,
+    1086079165,
+    3752296012,
+    1709202827,
+    823410594
+  ],
+  "matched_factorial_contrast|political_spectrum|justification|caption": [
+    42,
+    2777528460,
+    474636856,
+    1113647709,
+    1339060929
+  ],
+  "matched_factorial|economic_status|caption": [
+    42,
+    3448987707,
+    2742093627,
+    1581563002,
+    2499572762
+  ],
+  "matched_factorial|economic_status|justification": [
+    42,
+    4110591663,
+    2063934174,
+    2784102847,
+    2598360486
+  ],
+  "matched_factorial|economic_status|perception": [
+    42,
+    3289615980,
+    1281977782,
+    679108686,
+    3226918495
+  ],
+  "matched_factorial|gender|caption": [
+    42,
+    3342625902,
+    3075359764,
+    4150614723,
+    202112957
+  ],
+  "matched_factorial|gender|justification": [
+    42,
+    2107441062,
+    1742010127,
+    2854899500,
+    3776630033
+  ],
+  "matched_factorial|gender|perception": [
+    42,
+    4000653817,
+    1611883819,
+    1571373740,
+    3992925367
+  ],
+  "matched_factorial|personality|caption": [
+    42,
+    4229240135,
+    2714464321,
+    1949532486,
+    6677804
+  ],
+  "matched_factorial|personality|justification": [
+    42,
+    1859901981,
+    1779952052,
+    520072014,
+    1835493667
+  ],
+  "matched_factorial|personality|perception": [
+    42,
+    382444487,
+    481193220,
+    3481971431,
+    1274978855
+  ],
+  "matched_factorial|political_spectrum|caption": [
+    42,
+    733191112,
+    1768109894,
+    3212604870,
+    814812472
+  ],
+  "matched_factorial|political_spectrum|justification": [
+    42,
+    1609342282,
+    2557322190,
+    505832447,
+    3451610282
+  ],
+  "matched_factorial|political_spectrum|perception": [
+    42,
+    2461491999,
+    2850630442,
+    1897164505,
+    1295830528
+  ],
+  "modality_contrast|economic_status|justification|caption": [
+    42,
+    1269787533,
+    696153639,
+    13551377,
+    3651320135
+  ],
+  "modality_contrast|gender|justification|caption": [
+    42,
+    1159637778,
+    1372734430,
+    3333924631,
+    2710996653
+  ],
+  "modality_contrast|personality|justification|caption": [
+    42,
+    777860046,
+    396229653,
+    1245279657,
+    3801140765
+  ],
+  "modality_contrast|political_spectrum|justification|caption": [
+    42,
+    1680095069,
+    3561720920,
+    3736875068,
+    110596082
+  ],
+  "within_cross|economic_status|caption": [
+    42,
+    581024537,
+    514269773,
+    3911970192,
+    2360224204
+  ],
+  "within_cross|economic_status|justification": [
+    42,
+    1873927412,
+    3744707871,
+    2473514898,
+    2486117161
+  ],
+  "within_cross|economic_status|perception": [
+    42,
+    3766349264,
+    279331747,
+    1367180591,
+    1687542702
+  ],
+  "within_cross|gender|caption": [
+    42,
+    243282660,
+    1723810435,
+    2830229681,
+    4153229991
+  ],
+  "within_cross|gender|justification": [
+    42,
+    4241961375,
+    2817584237,
+    3677718423,
+    4250269565
+  ],
+  "within_cross|gender|perception": [
+    42,
+    2907373300,
+    2776260573,
+    1047929520,
+    500987411
+  ],
+  "within_cross|personality|caption": [
+    42,
+    3244912010,
+    880042773,
+    1681063242,
+    872886794
+  ],
+  "within_cross|personality|justification": [
+    42,
+    2407965216,
+    3526945357,
+    4114224833,
+    3968775032
+  ],
+  "within_cross|personality|perception": [
+    42,
+    1710255351,
+    393044721,
+    2644991155,
+    3925970403
+  ],
+  "within_cross|political_spectrum|caption": [
+    42,
+    355350285,
+    3961050462,
+    1063336481,
+    2725337490
+  ],
+  "within_cross|political_spectrum|justification": [
+    42,
+    977535435,
+    3182936216,
+    2314118173,
+    2403099066
+  ],
+  "within_cross|political_spectrum|perception": [
+    42,
+    3589753637,
+    3551346670,
+    3637083956,
+    3994668149
+  ]
+}
