@@ -24,5 +24,6 @@ logs/
 .vscode/
 Appendixes/
 docs/
+*.tex
 outputs/*/caption_embeddings.npy
 outputs/*/justification_embeddings.npy
