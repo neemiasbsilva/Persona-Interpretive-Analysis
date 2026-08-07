@@ -7,12 +7,22 @@ __pycache__/
 dist/
 build/
 .ipynb_checkpoints/
-# outputs/*.jsonl
-# outputs/*.csv
-outputs/*.pkl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.baseline/
+outputs/**/*.pkl
+data/**/annotations_baseline.jsonl
 data/raw_images/
 *.pt
 *.bin
 *.safetensors
 .DS_Store
 logs/
+.claude/
+.githooks/
+.vscode/
+Appendixes/
+docs/
+outputs/*/caption_embeddings.npy
+outputs/*/justification_embeddings.npy
