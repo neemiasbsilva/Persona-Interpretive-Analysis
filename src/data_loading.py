@@ -1,4 +1,5 @@
 """Annotation loading and demographic parsing."""
+
 import ast
 import json
 from pathlib import Path
@@ -10,21 +11,25 @@ from .config import DATA_PATH
 
 def load_annotations(path: Path = DATA_PATH) -> pd.DataFrame:
     """Load JSONL annotations into a DataFrame."""
-    records = [json.loads(line) for line in Path(path).open()]
+    with Path(path).open() as handle:
+        records = [json.loads(line) for line in handle]
     df = pd.DataFrame(records)
-    df["caption_len"]      = df["caption"].str.split().str.len()
+    df["caption_len"] = df["caption"].str.split().str.len()
     df["justification_len"] = df["justification"].str.split().str.len()
-    df["n_perceptions"]    = df["predicted_perceptions"].apply(len)
+    df["n_perceptions"] = df["predicted_perceptions"].apply(len)
     return df
 
 
-def _parse_demo(val) -> dict:
+def _parse_demo(val: object) -> dict:
     if isinstance(val, dict):
         return val
-    try:
-        return ast.literal_eval(val)
-    except Exception:
+    if not isinstance(val, str):
         return {}
+    try:
+        parsed = ast.literal_eval(val)
+    except (ValueError, SyntaxError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def parse_demographics(df: pd.DataFrame) -> pd.DataFrame:
@@ -32,7 +37,7 @@ def parse_demographics(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df["_demo"] = df["raw_demographics"].apply(_parse_demo)
     for col in ["gender", "economic_status", "political_spectrum", "personality"]:
-        df[col] = df["_demo"].apply(lambda d: d.get(col, ""))
+        df[col] = df["_demo"].apply(lambda d, key=col: d.get(key, ""))
     return df.drop(columns=["_demo"])
 
 
@@ -46,8 +51,13 @@ def create_profiles(df: pd.DataFrame) -> pd.DataFrame:
     """Add 'profile' (full string) and 'profile_abbr' columns."""
     df = df.copy()
     df["profile"] = (
-        df["gender"] + " / " + df["economic_status"] + " / " +
-        df["political_spectrum"] + " / " + df["personality"]
+        df["gender"]
+        + " / "
+        + df["economic_status"]
+        + " / "
+        + df["political_spectrum"]
+        + " / "
+        + df["personality"]
     )
     df["profile_abbr"] = df["profile"].apply(abbreviate_profile)
     return df
