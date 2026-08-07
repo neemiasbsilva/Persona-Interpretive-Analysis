@@ -1,10 +1,11 @@
 """Convergence metrics: sentiment agreement, perception Jaccard, merged dimensions."""
+
 from itertools import combinations
-from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
+
+from .metrics import jaccard
 
 
 def compute_sentiment_agreement(df: pd.DataFrame) -> pd.DataFrame:
@@ -15,21 +16,17 @@ def compute_sentiment_agreement(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for img_id, grp in df.groupby("image_id"):
         labels = grp["predicted_sentiment"].tolist()
-        pairs  = list(combinations(labels, 2))
-        agree  = float(np.mean([1.0 if a == b else 0.0 for a, b in pairs])) if pairs else 1.0
+        pairs = list(combinations(labels, 2))
+        agree = float(np.mean([1.0 if a == b else 0.0 for a, b in pairs])) if pairs else 1.0
         majority = grp["predicted_sentiment"].mode().iloc[0]
-        rows.append({
-            "image_id":           img_id,
-            "sentiment_agreement": agree,
-            "majority_sentiment":  majority,
-        })
+        rows.append(
+            {
+                "image_id": img_id,
+                "sentiment_agreement": agree,
+                "majority_sentiment": majority,
+            }
+        )
     return pd.DataFrame(rows)
-
-
-def _jaccard(a: list, b: list) -> float:
-    sa, sb = set(a), set(b)
-    union  = len(sa | sb)
-    return len(sa & sb) / union if union else 1.0
 
 
 def compute_label_jaccard(df: pd.DataFrame) -> pd.DataFrame:
@@ -40,19 +37,21 @@ def compute_label_jaccard(df: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for img_id, grp in df.groupby("image_id"):
         tag_lists = grp["predicted_perceptions"].tolist()
-        scores    = [_jaccard(a, b) for a, b in combinations(tag_lists, 2)]
-        rows.append({
-            "image_id":     img_id,
-            "label_jaccard": float(np.mean(scores)) if scores else 1.0,
-        })
+        scores = [jaccard(a, b, on_empty_union=1.0) for a, b in combinations(tag_lists, 2)]
+        rows.append(
+            {
+                "image_id": img_id,
+                "label_jaccard": float(np.mean(scores)) if scores else 1.0,
+            }
+        )
     return pd.DataFrame(rows)
 
 
 def merge_convergence_dimensions(
-    cap_sim_df:       pd.DataFrame,
-    sent_agree_df:    pd.DataFrame,
-    label_agree_df:   pd.DataFrame,
-    just_sim_df:      Optional[pd.DataFrame] = None,
+    cap_sim_df: pd.DataFrame,
+    sent_agree_df: pd.DataFrame,
+    label_agree_df: pd.DataFrame,
+    just_sim_df: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Merge all convergence dimensions into one per-image DataFrame.
 
@@ -63,14 +62,16 @@ def merge_convergence_dimensions(
     majority_sentiment, label_jaccard, [just_sim].
     """
     result = (
-        cap_sim_df.rename(columns={"mean_sim": "caption_sim"})
-        [["image_id", "caption_sim", "n_personas"]]
+        cap_sim_df.rename(columns={"mean_sim": "caption_sim"})[
+            ["image_id", "caption_sim", "n_personas"]
+        ]
         .merge(sent_agree_df, on="image_id")
         .merge(label_agree_df, on="image_id")
     )
     if just_sim_df is not None:
         result = result.merge(
             just_sim_df.rename(columns={"mean_just_sim": "just_sim"})[["image_id", "just_sim"]],
-            on="image_id", how="left",
+            on="image_id",
+            how="left",
         )
     return result
