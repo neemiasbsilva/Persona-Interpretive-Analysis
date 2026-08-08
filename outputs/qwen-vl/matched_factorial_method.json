@@ -1,0 +1,65 @@
+{
+  "model": "qwen-vl",
+  "source": {
+    "path": "outputs/qwen-vl/matched_factorial_persona_sim.csv",
+    "sha256": "62e46ca1c8f12a874806516ba7878b9afe3a62a5e492b002382c065dc0d5af91",
+    "cache_metadata_path": "outputs/qwen-vl/matched_factorial_persona_sim.csv.meta.json",
+    "cache_schema_version": 2,
+    "empty_perception_policy": "exclude_pairs_with_empty_perception_responses",
+    "construction": "matched_profile_pairs_one_dimension_varied"
+  },
+  "analysis_unit": "image",
+  "status": "secondary; the marginal analysis in within_cross_significance.csv is primary",
+  "matched_factorial_estimand": "arithmetic mean over images of the matched profile-pair contrast (mean own-profile coherence of the two profiles minus their between-profile similarity), averaged over the profile pairs that differ only on the target dimension",
+  "matched_pairs_per_dimension": {
+    "gender": 12,
+    "economic_status": 12,
+    "political_spectrum": 12,
+    "personality": 24
+  },
+  "unusable_pair_policy": "a profile pair leaves both the within and cross terms together, so their difference equals the mean of the per-pair contrasts",
+  "confidence_interval": {
+    "estimand": "arithmetic mean paired difference",
+    "method": "BCa bootstrap over images",
+    "level": 0.95,
+    "resamples": 100000,
+    "seed": 42
+  },
+  "wilcoxon": {
+    "alternative": "two-sided",
+    "zero_method": "wilcox",
+    "null": "the paired-difference distribution is symmetric about zero",
+    "fallback_resamples": 100000,
+    "methods_used": [
+      "exact"
+    ],
+    "methods_used_contrast": [
+      "exact"
+    ]
+  },
+  "sensitivity": {
+    "method": "exact two-sided binomial sign test",
+    "zeros": "excluded"
+  },
+  "multiplicity": {
+    "method": "Benjamini-Hochberg",
+    "matched_factorial_family": "12 tests within this model",
+    "matched_factorial_contrast_family": "4 justification-minus-caption tests within this model"
+  },
+  "contrast": {
+    "estimand": "arithmetic mean over images of the matched justification effect minus the matched caption effect",
+    "target": "justification",
+    "reference": "caption",
+    "metric": "cosine similarity for both modalities",
+    "excluded": "perception-minus-caption because Jaccard and cosine effects are not on a common scale",
+    "seed_namespace": "matched_factorial_contrast",
+    "output": "matched_factorial_modality_contrast.csv"
+  },
+  "seed_namespace": "matched_factorial",
+  "ratio_reference": "within_cross_significance.csv",
+  "software": {
+    "numpy": "2.4.4",
+    "pandas": "3.0.2",
+    "scipy": "1.17.1"
+  }
+}
