@@ -1,0 +1,9 @@
+model,display_model,figure,heatmap,metric,rows,columns,minimum,maximum,csv
+qwen-vl,Qwen3-VL,Main-paper topic-persona heatmap,topic_persona_proportion,"within-profile topic proportion, renormalized over displayed topics",10,24,0.018922852983988356,0.26255380200860834,qwen-vl__topic_persona_proportion.csv
+qwen-vl,Qwen3-VL,Appendix Figure A1,caption_similarity,mean image-conditioned cosine similarity,24,24,0.8531072735786438,0.8976524066925049,qwen-vl__caption_similarity.csv
+qwen-vl,Qwen3-VL,Appendix Figure A2,justification_similarity,mean image-conditioned cosine similarity,24,24,0.43630200624465942,0.70097896933555603,qwen-vl__justification_similarity.csv
+qwen-vl,Qwen3-VL,Appendix Figure A3,perception_jaccard,mean image-conditioned Jaccard similarity,24,24,0.3945075516979149,0.51735628004817114,qwen-vl__perception_jaccard.csv
+gemma-4-E4B-it_t01,Gemma4,Main-paper topic-persona heatmap,topic_persona_proportion,"within-profile topic proportion, renormalized over displayed topics",10,24,0,0.6292134831460674,gemma-4-E4B-it_t01__topic_persona_proportion.csv
+gemma-4-E4B-it_t01,Gemma4,Appendix Figure A1,caption_similarity,mean image-conditioned cosine similarity,24,24,0.87398087978363037,0.94597669243812565,gemma-4-E4B-it_t01__caption_similarity.csv
+gemma-4-E4B-it_t01,Gemma4,Appendix Figure A2,justification_similarity,mean image-conditioned cosine similarity,24,24,0.45343750715255737,0.87871571898460388,gemma-4-E4B-it_t01__justification_similarity.csv
+gemma-4-E4B-it_t01,Gemma4,Appendix Figure A3,perception_jaccard,mean image-conditioned Jaccard similarity,24,24,0.49579311111111113,0.90214888241010682,gemma-4-E4B-it_t01__perception_jaccard.csv

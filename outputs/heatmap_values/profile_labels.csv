@@ -1,0 +1,49 @@
+model,display_model,matrix_position,abbreviation,full_profile
+qwen-vl,Qwen3-VL,0,F/High/Cons/Anal,Female / High income / Conservative / Analytical
+qwen-vl,Qwen3-VL,1,F/High/Cons/Empa,Female / High income / Conservative / Empathetic
+qwen-vl,Qwen3-VL,2,F/High/Cons/Prag,Female / High income / Conservative / Pragmatic
+qwen-vl,Qwen3-VL,3,F/High/Prog/Anal,Female / High income / Progressive / Analytical
+qwen-vl,Qwen3-VL,4,F/High/Prog/Empa,Female / High income / Progressive / Empathetic
+qwen-vl,Qwen3-VL,5,F/High/Prog/Prag,Female / High income / Progressive / Pragmatic
+qwen-vl,Qwen3-VL,6,F/Low /Cons/Anal,Female / Low income / Conservative / Analytical
+qwen-vl,Qwen3-VL,7,F/Low /Cons/Empa,Female / Low income / Conservative / Empathetic
+qwen-vl,Qwen3-VL,8,F/Low /Cons/Prag,Female / Low income / Conservative / Pragmatic
+qwen-vl,Qwen3-VL,9,F/Low /Prog/Anal,Female / Low income / Progressive / Analytical
+qwen-vl,Qwen3-VL,10,F/Low /Prog/Empa,Female / Low income / Progressive / Empathetic
+qwen-vl,Qwen3-VL,11,F/Low /Prog/Prag,Female / Low income / Progressive / Pragmatic
+qwen-vl,Qwen3-VL,12,M/High/Cons/Anal,Male / High income / Conservative / Analytical
+qwen-vl,Qwen3-VL,13,M/High/Cons/Empa,Male / High income / Conservative / Empathetic
+qwen-vl,Qwen3-VL,14,M/High/Cons/Prag,Male / High income / Conservative / Pragmatic
+qwen-vl,Qwen3-VL,15,M/High/Prog/Anal,Male / High income / Progressive / Analytical
+qwen-vl,Qwen3-VL,16,M/High/Prog/Empa,Male / High income / Progressive / Empathetic
+qwen-vl,Qwen3-VL,17,M/High/Prog/Prag,Male / High income / Progressive / Pragmatic
+qwen-vl,Qwen3-VL,18,M/Low /Cons/Anal,Male / Low income / Conservative / Analytical
+qwen-vl,Qwen3-VL,19,M/Low /Cons/Empa,Male / Low income / Conservative / Empathetic
+qwen-vl,Qwen3-VL,20,M/Low /Cons/Prag,Male / Low income / Conservative / Pragmatic
+qwen-vl,Qwen3-VL,21,M/Low /Prog/Anal,Male / Low income / Progressive / Analytical
+qwen-vl,Qwen3-VL,22,M/Low /Prog/Empa,Male / Low income / Progressive / Empathetic
+qwen-vl,Qwen3-VL,23,M/Low /Prog/Prag,Male / Low income / Progressive / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,0,F/High/Cons/Anal,Female / High income / Conservative / Analytical
+gemma-4-E4B-it_t01,Gemma4,1,F/High/Cons/Empa,Female / High income / Conservative / Empathetic
+gemma-4-E4B-it_t01,Gemma4,2,F/High/Cons/Prag,Female / High income / Conservative / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,3,F/High/Prog/Anal,Female / High income / Progressive / Analytical
+gemma-4-E4B-it_t01,Gemma4,4,F/High/Prog/Empa,Female / High income / Progressive / Empathetic
+gemma-4-E4B-it_t01,Gemma4,5,F/High/Prog/Prag,Female / High income / Progressive / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,6,F/Low /Cons/Anal,Female / Low income / Conservative / Analytical
+gemma-4-E4B-it_t01,Gemma4,7,F/Low /Cons/Empa,Female / Low income / Conservative / Empathetic
+gemma-4-E4B-it_t01,Gemma4,8,F/Low /Cons/Prag,Female / Low income / Conservative / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,9,F/Low /Prog/Anal,Female / Low income / Progressive / Analytical
+gemma-4-E4B-it_t01,Gemma4,10,F/Low /Prog/Empa,Female / Low income / Progressive / Empathetic
+gemma-4-E4B-it_t01,Gemma4,11,F/Low /Prog/Prag,Female / Low income / Progressive / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,12,M/High/Cons/Anal,Male / High income / Conservative / Analytical
+gemma-4-E4B-it_t01,Gemma4,13,M/High/Cons/Empa,Male / High income / Conservative / Empathetic
+gemma-4-E4B-it_t01,Gemma4,14,M/High/Cons/Prag,Male / High income / Conservative / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,15,M/High/Prog/Anal,Male / High income / Progressive / Analytical
+gemma-4-E4B-it_t01,Gemma4,16,M/High/Prog/Empa,Male / High income / Progressive / Empathetic
+gemma-4-E4B-it_t01,Gemma4,17,M/High/Prog/Prag,Male / High income / Progressive / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,18,M/Low /Cons/Anal,Male / Low income / Conservative / Analytical
+gemma-4-E4B-it_t01,Gemma4,19,M/Low /Cons/Empa,Male / Low income / Conservative / Empathetic
+gemma-4-E4B-it_t01,Gemma4,20,M/Low /Cons/Prag,Male / Low income / Conservative / Pragmatic
+gemma-4-E4B-it_t01,Gemma4,21,M/Low /Prog/Anal,Male / Low income / Progressive / Analytical
+gemma-4-E4B-it_t01,Gemma4,22,M/Low /Prog/Empa,Male / Low income / Progressive / Empathetic
+gemma-4-E4B-it_t01,Gemma4,23,M/Low /Prog/Prag,Male / Low income / Progressive / Pragmatic

@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "empty_perception_policy": "exclude_pairs_with_empty_perception_responses",
+  "annotation_rows": 5000,
+  "annotation_data_sha256": "5a75ca9d49530d2080c304f8e55e7d1d620137e32715721de3543d123bbcde54",
+  "embedding_id_order_sha256": "23a45430ef657d8aec56baaea5fc30fbea804f851fcb80f2dcc262b708dbaf03",
+  "caption_embeddings_sha256": "2dbc609fa2938d9130850a7162f0299b720a986a7f0a7907966d0329e588a76b",
+  "justification_embeddings_sha256": "382e1dd154997a4d315ce1d476068831c7279a2f54ec550c1a322b10f14b412e",
+  "demographic_columns": [
+    "gender",
+    "economic_status",
+    "political_spectrum",
+    "personality"
+  ],
+  "allow_missing_embeddings": false,
+  "csv_sha256": "68d75eb69243866f2d54fa1a6ac1e1d593c89f342ca2ec8492b49dd8b6fca659"
+}
