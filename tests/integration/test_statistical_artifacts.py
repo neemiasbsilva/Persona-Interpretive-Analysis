@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,7 @@ MODELS = PAPER_MODELS
 
 
 @pytest.mark.parametrize("model", MODELS)
-def test_real_600_row_sources_reproduce_canonical_rank_results(model):
+def test_real_600_row_sources_reproduce_canonical_rank_results(model: str) -> None:
     output = ROOT / "outputs" / model
     metadata = validate_within_cross_cache_metadata(output / "within_cross_persona_sim.csv")
     assert metadata["empty_perception_policy"] == "exclude_pairs_with_empty_perception_responses"
@@ -78,7 +79,7 @@ def test_real_600_row_sources_reproduce_canonical_rank_results(model):
 
 
 @pytest.mark.parametrize("model", MODELS)
-def test_raw_annotation_and_embedding_cache_rows_are_exactly_aligned(model):
+def test_raw_annotation_and_embedding_cache_rows_are_exactly_aligned(model: str) -> None:
     data_path = ROOT / "data" / model / "annotations_baseline.jsonl"
     output = ROOT / "outputs" / model
     with data_path.open(encoding="utf-8") as stream:
@@ -91,12 +92,12 @@ def test_raw_annotation_and_embedding_cache_rows_are_exactly_aligned(model):
     assert np.load(output / "justification_embeddings.npy", mmap_mode="r").shape[0] == len(raw_ids)
 
 
-def test_bh_correction_matches_known_example():
+def test_bh_correction_matches_known_example() -> None:
     adjusted = benjamini_hochberg(np.array([0.01, 0.04, 0.03, 0.002]))
     np.testing.assert_allclose(adjusted, [0.02, 0.04, 0.04, 0.008])
 
 
-def test_canonical_table_and_paper_are_exactly_synchronized():
+def test_canonical_table_and_paper_are_exactly_synchronized() -> None:
     qwen_output = ROOT / "outputs" / "qwen-vl"
     gemma_output = ROOT / "outputs" / "gemma-4-E4B-it_t01"
     expected_table = combined_latex_table(
@@ -137,7 +138,7 @@ def test_canonical_table_and_paper_are_exactly_synchronized():
         }.intersection(within.columns)
 
 
-def test_matched_factorial_artifacts_and_paper_are_exactly_synchronized():
+def test_matched_factorial_artifacts_and_paper_are_exactly_synchronized() -> None:
     frames = []
     contrast_frames = []
     for model in MODELS:
@@ -179,7 +180,7 @@ def test_matched_factorial_artifacts_and_paper_are_exactly_synchronized():
         )
         contrast_frames.append(contrast)
 
-    qwen_gender = contrast_frames[0].set_index("dimension").loc["gender"]
+    qwen_gender = cast("pd.Series[Any]", contrast_frames[0].set_index("dimension").loc["gender"])
     assert int(qwen_gender["n_pos"]) < 50
     assert float(qwen_gender["rank_biserial"]) < 1.0
 

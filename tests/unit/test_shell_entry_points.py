@@ -34,14 +34,14 @@ def _help_text(script: Path) -> str:
     return result.stdout
 
 
-def test_every_entry_point_is_discovered(repo_root):
+def test_every_entry_point_is_discovered(repo_root: Path) -> None:
     names = {p.name for p in _entry_points(repo_root)}
     assert "run_experiments.sh" in names
     assert "07_lint.sh" in names
     assert len(names) >= 8
 
 
-def test_help_starts_with_the_script_name(repo_root):
+def test_help_starts_with_the_script_name(repo_root: Path) -> None:
     for script in _entry_points(repo_root):
         text = _help_text(script)
         first = text.splitlines()[0] if text.splitlines() else ""
@@ -50,14 +50,14 @@ def test_help_starts_with_the_script_name(repo_root):
         )
 
 
-def test_help_never_leaks_source_code(repo_root):
+def test_help_never_leaks_source_code(repo_root: Path) -> None:
     for script in _entry_points(repo_root):
         text = _help_text(script)
         for leak in ("usage() {", 'source "$(dirname', "sed -n", "#!/usr/bin/env"):
             assert leak not in text, f"{script.name} --help leaked source: {leak!r}"
 
 
-def test_help_documents_usage_and_is_substantial(repo_root):
+def test_help_documents_usage_and_is_substantial(repo_root: Path) -> None:
     for script in _entry_points(repo_root):
         text = _help_text(script)
         assert "Usage:" in text, f"{script.name} --help has no Usage section"
@@ -65,7 +65,7 @@ def test_help_documents_usage_and_is_substantial(repo_root):
 
 
 @pytest.mark.parametrize("group", ["paper", "t0", "all"])
-def test_model_lists_are_readable_by_the_shell_harness(repo_root, group):
+def test_model_lists_are_readable_by_the_shell_harness(repo_root: Path, group: str) -> None:
     result = subprocess.run(
         ["/usr/bin/env", "uv", "run", "python", "-m", "src.models", group],
         capture_output=True,
@@ -83,5 +83,5 @@ def test_model_lists_are_readable_by_the_shell_harness(repo_root, group):
     assert names == expected
 
 
-def test_reproduce_paper_script_is_gone(repo_root):
+def test_reproduce_paper_script_is_gone(repo_root: Path) -> None:
     assert not (repo_root / "reproduce_paper.sh").exists()

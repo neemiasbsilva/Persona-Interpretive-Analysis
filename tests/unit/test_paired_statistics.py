@@ -1,3 +1,6 @@
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -7,7 +10,11 @@ from src import similarity as sim
 from src.embeddings import load_or_encode_with_ids
 
 
-def _wc_frame(dimensions=("gender",), modalities=("caption",), n_images=8) -> pd.DataFrame:
+def _wc_frame(
+    dimensions: tuple[str, ...] = ("gender",),
+    modalities: tuple[str, ...] = ("caption",),
+    n_images: int = 8,
+) -> pd.DataFrame:
     rows = []
     for dim_offset, dimension in enumerate(dimensions):
         for mod_offset, modality in enumerate(modalities):
@@ -26,7 +33,7 @@ def _wc_frame(dimensions=("gender",), modalities=("caption",), n_images=8) -> pd
     return pd.DataFrame(rows)
 
 
-def test_all_positive_differences_use_exact_wilcoxon():
+def test_all_positive_differences_use_exact_wilcoxon() -> None:
     diff = np.arange(1.0, 51.0)
 
     result = sim.paired_stats(
@@ -48,7 +55,7 @@ def test_all_positive_differences_use_exact_wilcoxon():
     assert result["wilcoxon_method"] == "exact"
 
 
-def test_negative_zero_tie_and_mixed_vectors_are_reported_correctly():
+def test_negative_zero_tie_and_mixed_vectors_are_reported_correctly() -> None:
     negative = -np.arange(1.0, 7.0)
     neg_result = sim.paired_stats(negative, np.zeros(6), n_boot=200)
     assert neg_result["w_stat"] == 0
@@ -89,18 +96,18 @@ def test_negative_zero_tie_and_mixed_vectors_are_reported_correctly():
         (np.array([[1.0, 2.0]]), np.zeros(2), "one-dimensional"),
     ],
 )
-def test_paired_vector_validation(a, b, match):
+def test_paired_vector_validation(a: np.ndarray, b: np.ndarray, match: str) -> None:
     with pytest.raises(ValueError, match=match):
         sim.paired_stats(a, b, n_boot=10)
 
 
-def test_cell_results_are_invariant_to_row_and_iteration_order():
+def test_cell_results_are_invariant_to_row_and_iteration_order() -> None:
     wc = _wc_frame(dimensions=("gender", "personality"))
     shuffled = wc.sample(frac=1, random_state=18).reset_index(drop=True)
 
     forward = sim.run_within_cross_significance(
         wc,
-        demo_cols=("gender", "personality"),
+        demo_cols=["gender", "personality"],
         modalities=("caption",),
         n_boot=500,
         wilcoxon_resamples=199,
@@ -108,7 +115,7 @@ def test_cell_results_are_invariant_to_row_and_iteration_order():
     )
     reverse = sim.run_within_cross_significance(
         shuffled,
-        demo_cols=("personality", "gender"),
+        demo_cols=["personality", "gender"],
         modalities=("caption",),
         n_boot=500,
         wilcoxon_resamples=199,
@@ -127,11 +134,11 @@ def test_cell_results_are_invariant_to_row_and_iteration_order():
     assert (forward["p_bh"] == forward["p_wilcoxon_bh"]).all()
 
 
-def test_exploratory_reference_relation_is_caption_only():
+def test_exploratory_reference_relation_is_caption_only() -> None:
     wc = _wc_frame(modalities=("caption", "justification"))
     result = sim.run_within_cross_significance(
         wc,
-        demo_cols=("gender",),
+        demo_cols=["gender"],
         modalities=("caption", "justification"),
         n_boot=200,
         wilcoxon_resamples=99,
@@ -145,13 +152,13 @@ def test_exploratory_reference_relation_is_caption_only():
     assert pd.isna(result.loc["justification", "ci_relation_to_exploratory_reference"])
 
 
-def test_within_cross_frame_rejects_duplicates_and_nonfinite_values():
+def test_within_cross_frame_rejects_duplicates_and_nonfinite_values() -> None:
     wc = _wc_frame()
     duplicate = pd.concat([wc, wc.iloc[[0]]], ignore_index=True)
     with pytest.raises(ValueError, match="unique image/dimension/modality"):
         sim.run_within_cross_significance(
             duplicate,
-            demo_cols=("gender",),
+            demo_cols=["gender"],
             modalities=("caption",),
             n_boot=10,
         )
@@ -161,17 +168,17 @@ def test_within_cross_frame_rejects_duplicates_and_nonfinite_values():
     with pytest.raises(ValueError, match="finite"):
         sim.run_within_cross_significance(
             nonfinite,
-            demo_cols=("gender",),
+            demo_cols=["gender"],
             modalities=("caption",),
             n_boot=10,
         )
 
 
-def test_modality_contrast_defaults_to_justification_and_requires_pairing():
+def test_modality_contrast_defaults_to_justification_and_requires_pairing() -> None:
     wc = _wc_frame(modalities=("caption", "justification"))
     result = sim.run_modality_contrast(
         wc,
-        demo_cols=("gender",),
+        demo_cols=["gender"],
         n_boot=300,
         wilcoxon_resamples=199,
     )
@@ -182,13 +189,13 @@ def test_modality_contrast_defaults_to_justification_and_requires_pairing():
     with pytest.raises(ValueError, match="image pairing mismatch"):
         sim.run_modality_contrast(
             missing_pair,
-            demo_cols=("gender",),
+            demo_cols=["gender"],
             n_boot=10,
             wilcoxon_resamples=19,
         )
 
 
-def test_contrast_seed_namespace_moves_only_the_resampled_quantities():
+def test_contrast_seed_namespace_moves_only_the_resampled_quantities() -> None:
     """The namespace exists so the matched construction gets its own streams.
 
     Rank statistics are resample-independent and must be untouched by it; the
@@ -199,7 +206,7 @@ def test_contrast_seed_namespace_moves_only_the_resampled_quantities():
     varied = wc["modality"].eq("justification")
     wc.loc[varied, "within_mean"] += rng.uniform(0.001, 0.02, int(varied.sum()))
 
-    kwargs = {"demo_cols": ("gender",), "n_boot": 400, "wilcoxon_resamples": 199}
+    kwargs: dict[str, Any] = {"demo_cols": ["gender"], "n_boot": 400, "wilcoxon_resamples": 199}
 
     marginal = sim.run_modality_contrast(wc, **kwargs).iloc[0]
     matched = sim.run_modality_contrast(
@@ -211,7 +218,7 @@ def test_contrast_seed_namespace_moves_only_the_resampled_quantities():
     assert (marginal["ci_lo"], marginal["ci_hi"]) != (matched["ci_lo"], matched["ci_hi"])
 
 
-def _alignment_fixture() -> tuple:
+def _alignment_fixture() -> tuple[pd.DataFrame, np.ndarray, dict[str, int]]:
     frame = pd.DataFrame(
         {
             "annotation_id": ["missing", "a", "b", "c", "d"],
@@ -232,7 +239,7 @@ def _alignment_fixture() -> tuple:
     return frame, embeddings, id_index
 
 
-def test_missing_embeddings_fail_by_default_and_explicit_exclusion_stays_aligned():
+def test_missing_embeddings_fail_by_default_and_explicit_exclusion_stays_aligned() -> None:
     frame, embeddings, id_index = _alignment_fixture()
 
     with pytest.raises(ValueError, match="no embedding row"):
@@ -259,7 +266,7 @@ def test_missing_embeddings_fail_by_default_and_explicit_exclusion_stays_aligned
     assert result.loc["perception", "cross_mean"] == pytest.approx(0.5)
 
 
-def test_malformed_perception_tags_raise_instead_of_becoming_empty_sets():
+def test_malformed_perception_tags_raise_instead_of_becoming_empty_sets() -> None:
     frame = pd.DataFrame(
         {
             "annotation_id": ["a", "b"],
@@ -281,8 +288,8 @@ def test_malformed_perception_tags_raise_instead_of_becoming_empty_sets():
 
 
 def test_embedding_loader_rejects_reordered_or_length_mismatched_sidecars(
-    tmp_path,
-):
+    tmp_path: Path,
+) -> None:
     frame = pd.DataFrame(
         {
             "annotation_id": ["a", "b"],

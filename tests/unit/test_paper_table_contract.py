@@ -11,6 +11,7 @@ justification-minus-caption) -- and all three contracts are pinned.
 from __future__ import annotations
 
 from itertools import combinations
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -51,12 +52,12 @@ MARKER_PAIRS = (
 )
 
 
-def _golden(golden_dir, model, name) -> pd.DataFrame:
+def _golden(golden_dir: Path, model: str, name: str) -> pd.DataFrame:
     return pd.read_csv(golden_dir / model / name)
 
 
 @pytest.fixture
-def canonical_table(golden_dir):
+def canonical_table(golden_dir: Path) -> str:
     frames = [
         _golden(golden_dir, model, name)
         for model in PAPER_MODELS
@@ -66,7 +67,7 @@ def canonical_table(golden_dir):
 
 
 @pytest.fixture
-def matched_table(golden_dir):
+def matched_table(golden_dir: Path) -> str:
     frames = [
         _golden(golden_dir, model, "matched_factorial_significance.csv") for model in PAPER_MODELS
     ]
@@ -74,7 +75,7 @@ def matched_table(golden_dir):
 
 
 @pytest.fixture
-def matched_contrast_table(golden_dir):
+def matched_contrast_table(golden_dir: Path) -> str:
     frames = [
         _golden(golden_dir, model, "matched_factorial_modality_contrast.csv")
         for model in PAPER_MODELS
@@ -82,26 +83,28 @@ def matched_contrast_table(golden_dir):
     return matched_contrast_latex_table(*frames)
 
 
-def test_generated_table_matches_the_committed_artifact(canonical_table, golden_dir):
+def test_generated_table_matches_the_committed_artifact(
+    canonical_table: str, golden_dir: Path
+) -> None:
     expected = (golden_dir / "within_cross_combined_table.tex").read_text(encoding="utf-8")
     assert canonical_table == expected
 
 
-def test_table_is_delimited_by_exactly_one_marker_pair(canonical_table):
+def test_table_is_delimited_by_exactly_one_marker_pair(canonical_table: str) -> None:
     assert canonical_table.count(TABLE_BEGIN) == 1
     assert canonical_table.count(TABLE_END) == 1
     assert canonical_table.startswith(TABLE_BEGIN)
     assert canonical_table.rstrip().endswith(TABLE_END)
 
 
-def test_table_carries_one_label_and_no_retired_labels(canonical_table):
+def test_table_carries_one_label_and_no_retired_labels(canonical_table: str) -> None:
     assert canonical_table.count(rf"\label{{{COMBINED_TABLE_LABEL}}}") == 1
     for retired in RETIRED_TABLE_LABELS:
         assert rf"\label{{{retired}}}" not in canonical_table
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_canonical_frames_have_the_agreed_shape(golden_dir, model):
+def test_canonical_frames_have_the_agreed_shape(golden_dir: Path, model: str) -> None:
     within = _golden(golden_dir, model, "within_cross_significance.csv")
     contrast = _golden(golden_dir, model, "within_cross_modality_contrast.csv")
     complete = _golden(golden_dir, model, "within_cross_complete_image_sensitivity.csv")
@@ -114,13 +117,15 @@ def test_canonical_frames_have_the_agreed_shape(golden_dir, model):
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_retired_columns_never_reappear(golden_dir, model):
+def test_retired_columns_never_reappear(golden_dir: Path, model: str) -> None:
     within = _golden(golden_dir, model, "within_cross_significance.csv")
     assert not {"p_perm", "p_perm_bh", "negligible", "p_bh"}.intersection(within.columns)
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_source_frame_is_one_row_per_image_dimension_and_modality(golden_dir, model):
+def test_source_frame_is_one_row_per_image_dimension_and_modality(
+    golden_dir: Path, model: str
+) -> None:
     source = pd.read_csv(golden_dir / model / "within_cross_persona_sim.csv")
     assert source.shape == (600, 5)
     assert source["image_id"].nunique() == 50
@@ -129,7 +134,9 @@ def test_source_frame_is_one_row_per_image_dimension_and_modality(golden_dir, mo
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_deterministic_rank_quantities_reproduce_from_the_source(golden_dir, model):
+def test_deterministic_rank_quantities_reproduce_from_the_source(
+    golden_dir: Path, model: str
+) -> None:
     source = pd.read_csv(golden_dir / model / "within_cross_persona_sim.csv")
     observed = run_within_cross_significance(
         source, n_boot=99, wilcoxon_resamples=999, seed=42
@@ -147,24 +154,26 @@ def test_deterministic_rank_quantities_reproduce_from_the_source(golden_dir, mod
         )
 
 
-def test_bh_correction_matches_known_example():
+def test_bh_correction_matches_known_example() -> None:
     adjusted = benjamini_hochberg(np.array([0.01, 0.04, 0.03, 0.002]))
     np.testing.assert_allclose(adjusted, [0.02, 0.04, 0.04, 0.008])
 
 
-def test_generated_matched_table_matches_the_committed_artifact(matched_table, golden_dir):
+def test_generated_matched_table_matches_the_committed_artifact(
+    matched_table: str, golden_dir: Path
+) -> None:
     expected = (golden_dir / "matched_factorial_table.tex").read_text(encoding="utf-8")
     assert matched_table == expected
 
 
-def test_matched_table_is_delimited_by_exactly_one_marker_pair(matched_table):
+def test_matched_table_is_delimited_by_exactly_one_marker_pair(matched_table: str) -> None:
     assert matched_table.count(MATCHED_TABLE_BEGIN) == 1
     assert matched_table.count(MATCHED_TABLE_END) == 1
     assert matched_table.startswith(MATCHED_TABLE_BEGIN)
     assert matched_table.rstrip().endswith(MATCHED_TABLE_END)
 
 
-def test_matched_table_carries_its_own_label(matched_table):
+def test_matched_table_carries_its_own_label(matched_table: str) -> None:
     assert matched_table.count(rf"\label{{{MATCHED_TABLE_LABEL}}}") == 1
     assert rf"\label{{{COMBINED_TABLE_LABEL}}}" not in matched_table
     for retired in RETIRED_TABLE_LABELS:
@@ -172,20 +181,22 @@ def test_matched_table_carries_its_own_label(matched_table):
 
 
 def test_generated_matched_contrast_table_matches_the_committed_artifact(
-    matched_contrast_table, golden_dir
-):
+    matched_contrast_table: str, golden_dir: Path
+) -> None:
     expected = (golden_dir / "matched_factorial_contrast_table.tex").read_text(encoding="utf-8")
     assert matched_contrast_table == expected
 
 
-def test_matched_contrast_table_is_delimited_by_exactly_one_marker_pair(matched_contrast_table):
+def test_matched_contrast_table_is_delimited_by_exactly_one_marker_pair(
+    matched_contrast_table: str,
+) -> None:
     assert matched_contrast_table.count(MATCHED_CONTRAST_TABLE_BEGIN) == 1
     assert matched_contrast_table.count(MATCHED_CONTRAST_TABLE_END) == 1
     assert matched_contrast_table.startswith(MATCHED_CONTRAST_TABLE_BEGIN)
     assert matched_contrast_table.rstrip().endswith(MATCHED_CONTRAST_TABLE_END)
 
 
-def test_matched_contrast_table_carries_its_own_label(matched_contrast_table):
+def test_matched_contrast_table_carries_its_own_label(matched_contrast_table: str) -> None:
     assert matched_contrast_table.count(rf"\label{{{MATCHED_CONTRAST_TABLE_LABEL}}}") == 1
     assert rf"\label{{{MATCHED_TABLE_LABEL}}}" not in matched_contrast_table
     assert rf"\ref{{{MATCHED_TABLE_LABEL}}}" in matched_contrast_table
@@ -194,8 +205,8 @@ def test_matched_contrast_table_carries_its_own_label(matched_contrast_table):
 
 
 def test_marker_pairs_are_disjoint(
-    canonical_table, matched_table, matched_contrast_table, tmp_path
-):
+    canonical_table: str, matched_table: str, matched_contrast_table: str, tmp_path: Path
+) -> None:
     for one, other in combinations(MARKER_PAIRS, 2):
         for one_marker, other_marker in zip(one, other, strict=True):
             assert one_marker not in other_marker
@@ -214,7 +225,7 @@ def test_marker_pairs_are_disjoint(
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_frames_have_the_agreed_shape(golden_dir, model):
+def test_matched_frames_have_the_agreed_shape(golden_dir: Path, model: str) -> None:
     matched = _golden(golden_dir, model, "matched_factorial_significance.csv")
     marginal = _golden(golden_dir, model, "within_cross_significance.csv")
 
@@ -243,7 +254,9 @@ def test_matched_frames_have_the_agreed_shape(golden_dir, model):
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_source_frame_is_one_row_per_image_dimension_and_modality(golden_dir, model):
+def test_matched_source_frame_is_one_row_per_image_dimension_and_modality(
+    golden_dir: Path, model: str
+) -> None:
     source = pd.read_csv(golden_dir / model / "matched_factorial_persona_sim.csv")
     assert source.shape == (600, 6)
     assert source["image_id"].nunique() == 50
@@ -252,7 +265,9 @@ def test_matched_source_frame_is_one_row_per_image_dimension_and_modality(golden
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_deterministic_rank_quantities_reproduce_from_the_source(golden_dir, model):
+def test_matched_deterministic_rank_quantities_reproduce_from_the_source(
+    golden_dir: Path, model: str
+) -> None:
     source = pd.read_csv(golden_dir / model / "matched_factorial_persona_sim.csv")
     observed = run_within_cross_significance(
         source,
@@ -275,7 +290,7 @@ def test_matched_deterministic_rank_quantities_reproduce_from_the_source(golden_
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_contrast_frames_have_the_agreed_shape(golden_dir, model):
+def test_matched_contrast_frames_have_the_agreed_shape(golden_dir: Path, model: str) -> None:
     contrast = _golden(golden_dir, model, "matched_factorial_modality_contrast.csv")
 
     assert len(contrast) == 4
@@ -293,7 +308,9 @@ def test_matched_contrast_frames_have_the_agreed_shape(golden_dir, model):
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_contrast_equals_the_difference_of_the_matched_effects(golden_dir, model):
+def test_matched_contrast_equals_the_difference_of_the_matched_effects(
+    golden_dir: Path, model: str
+) -> None:
     contrast = _golden(golden_dir, model, "matched_factorial_modality_contrast.csv")
     matched = _golden(golden_dir, model, "matched_factorial_significance.csv")
 
@@ -305,7 +322,7 @@ def test_matched_contrast_equals_the_difference_of_the_matched_effects(golden_di
     np.testing.assert_allclose(contrast["mean_contrast"].to_numpy(), expected, rtol=1e-9)
 
 
-def test_matched_contrast_is_not_uniformly_degenerate(golden_dir):
+def test_matched_contrast_is_not_uniformly_degenerate(golden_dir: Path) -> None:
     """Qwen gender is the one cell whose rank statistics are not saturated.
 
     The matched effect table omits n_+, W and r_rb because they are constant;
@@ -320,7 +337,9 @@ def test_matched_contrast_is_not_uniformly_degenerate(golden_dir):
 
 
 @pytest.mark.parametrize("model", PAPER_MODELS)
-def test_matched_contrast_rank_quantities_reproduce_from_the_source(golden_dir, model):
+def test_matched_contrast_rank_quantities_reproduce_from_the_source(
+    golden_dir: Path, model: str
+) -> None:
     source = pd.read_csv(golden_dir / model / "matched_factorial_persona_sim.csv")
     observed = run_modality_contrast(
         source,
@@ -349,7 +368,7 @@ def test_matched_contrast_rank_quantities_reproduce_from_the_source(golden_dir, 
         )
 
 
-def test_verify_paper_table_reports_a_mismatch(tmp_path):
+def test_verify_paper_table_reports_a_mismatch(tmp_path: Path) -> None:
     paper = tmp_path / "paper.tex"
     generated = tmp_path / "table.tex"
     paper.write_text(f"intro\n{TABLE_BEGIN}\nROW A\n{TABLE_END}\nrest\n", encoding="utf-8")
@@ -359,7 +378,7 @@ def test_verify_paper_table_reports_a_mismatch(tmp_path):
         verify_paper_table(paper_path=paper, generated_path=generated)
 
 
-def test_verify_paper_table_accepts_an_exact_match(tmp_path):
+def test_verify_paper_table_accepts_an_exact_match(tmp_path: Path) -> None:
     block = f"{TABLE_BEGIN}\nROW A\n{TABLE_END}\n"
     paper = tmp_path / "paper.tex"
     generated = tmp_path / "table.tex"

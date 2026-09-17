@@ -10,6 +10,9 @@ corpora, so a regression surfaces without the 46 MB corpora.
 from __future__ import annotations
 
 import itertools
+from collections.abc import Sequence
+from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -45,7 +48,11 @@ EXPECTED_PAIRS = {
 }
 
 
-def _synthetic_corpus(images=("img_a", "img_b"), agents_per_profile=3, seed=0) -> tuple:
+def _synthetic_corpus(
+    images: tuple[str, ...] = ("img_a", "img_b"),
+    agents_per_profile: int = 3,
+    seed: int = 0,
+) -> tuple[pd.DataFrame, np.ndarray, np.ndarray, dict[str, int]]:
     rng = np.random.default_rng(seed)
     profiles = list(itertools.product(*[LEVELS[column] for column in DEMO_COLS]))
     rows = [
@@ -72,14 +79,14 @@ def _synthetic_corpus(images=("img_a", "img_b"), agents_per_profile=3, seed=0) -
     return df, caption, justification, id_index
 
 
-def _profile_index(df) -> tuple:
+def _profile_index(df: pd.DataFrame) -> tuple[list[tuple[str, ...]], np.ndarray]:
     profiles = persona_profiles(df)
     index_of = {profile: index for index, profile in enumerate(profiles)}
     keys = df[DEMO_COLS].astype(str).itertuples(index=False, name=None)
     return profiles, np.array([index_of[key] for key in keys])
 
 
-def test_matched_pairs_have_the_expected_counts():
+def test_matched_pairs_have_the_expected_counts() -> None:
     df, *_ = _synthetic_corpus()
     profiles = persona_profiles(df)
     assert len(profiles) == 24
@@ -87,7 +94,7 @@ def test_matched_pairs_have_the_expected_counts():
         assert len(matched_profile_pairs(profiles, dimension)) == expected
 
 
-def test_matched_pairs_differ_only_on_the_target_dimension():
+def test_matched_pairs_differ_only_on_the_target_dimension() -> None:
     df, *_ = _synthetic_corpus()
     profiles = persona_profiles(df)
     for target, dimension in enumerate(DEMO_COLS):
@@ -98,7 +105,7 @@ def test_matched_pairs_differ_only_on_the_target_dimension():
                     assert profiles[first][other] == profiles[second][other]
 
 
-def test_matched_pairs_are_sorted_and_deterministic():
+def test_matched_pairs_are_sorted_and_deterministic() -> None:
     df, *_ = _synthetic_corpus()
     profiles = persona_profiles(df)
     for dimension in DEMO_COLS:
@@ -108,7 +115,7 @@ def test_matched_pairs_are_sorted_and_deterministic():
         assert all(first < second for first, second in pairs)
 
 
-def test_unknown_dimension_and_duplicate_profiles_are_rejected():
+def test_unknown_dimension_and_duplicate_profiles_are_rejected() -> None:
     df, *_ = _synthetic_corpus()
     profiles = persona_profiles(df)
     with pytest.raises(ValueError, match="unknown persona dimension"):
@@ -117,7 +124,7 @@ def test_unknown_dimension_and_duplicate_profiles_are_rejected():
         matched_profile_pairs([*profiles, profiles[0]], "gender")
 
 
-def test_cosine_block_uses_actual_norms_not_a_unit_assumption():
+def test_cosine_block_uses_actual_norms_not_a_unit_assumption() -> None:
     df, caption, _, _ = _synthetic_corpus(images=("img_a",))
     _, profile_index = _profile_index(df)
     order = np.argsort(profile_index, kind="stable")
@@ -140,12 +147,12 @@ def test_cosine_block_uses_actual_norms_not_a_unit_assumption():
     np.testing.assert_allclose(observed, expected, rtol=0, atol=1e-12)
 
 
-def test_jaccard_block_matches_the_metrics_helper():
+def test_jaccard_block_matches_the_metrics_helper() -> None:
     df, *_ = _synthetic_corpus(images=("img_a",))
     _, profile_index = _profile_index(df)
     tag_sets = [set(tags) for tags in df["predicted_perceptions"]]
 
-    observed = _profile_jaccard_block(tag_sets, profile_index, 24)
+    observed = _profile_jaccard_block(cast("list[set[str] | None]", tag_sets), profile_index, 24)
 
     expected = np.full((24, 24), np.nan)
     for first in range(24):
@@ -170,10 +177,10 @@ def test_jaccard_block_matches_the_metrics_helper():
     np.testing.assert_allclose(observed, expected, rtol=0, atol=1e-12)
 
 
-def test_empty_perception_responses_take_no_part_in_any_pair():
+def test_empty_perception_responses_take_no_part_in_any_pair() -> None:
     df, *_ = _synthetic_corpus(images=("img_a",))
     _, profile_index = _profile_index(df)
-    tag_sets = [set(tags) for tags in df["predicted_perceptions"]]
+    tag_sets: list[set[str] | None] = [set(tags) for tags in df["predicted_perceptions"]]
 
     kept = _profile_jaccard_block(tag_sets, profile_index, 24)
     dropped = _profile_jaccard_block([None, *tag_sets[1:]], profile_index, 24)
@@ -185,7 +192,7 @@ def test_empty_perception_responses_take_no_part_in_any_pair():
     np.testing.assert_allclose(dropped, equivalent, rtol=0, atol=1e-12, equal_nan=True)
 
 
-def test_mean_of_differences_equals_difference_of_means():
+def test_mean_of_differences_equals_difference_of_means() -> None:
     df, caption, justification, id_index = _synthetic_corpus(images=("img_a",))
     profiles, profile_index = _profile_index(df)
     order = np.argsort(profile_index, kind="stable")
@@ -211,7 +218,7 @@ def test_mean_of_differences_equals_difference_of_means():
             assert per_pair == pytest.approx(row["within_mean"] - row["cross_mean"], abs=1e-12)
 
 
-def test_unusable_pair_is_dropped_from_both_terms_jointly():
+def test_unusable_pair_is_dropped_from_both_terms_jointly() -> None:
     block = np.array(
         [
             [0.9, 0.5, 0.4],
@@ -229,14 +236,14 @@ def test_unusable_pair_is_dropped_from_both_terms_jointly():
     assert np.isfinite([within, cross]).all()
 
 
-def test_a_cell_with_no_usable_pair_is_missing_rather_than_zero():
+def test_a_cell_with_no_usable_pair_is_missing_rather_than_zero() -> None:
     within, cross, n_pairs = _matched_pair_means(np.full((2, 2), np.nan), [(0, 1)])
     assert n_pairs == 0
     assert np.isnan(within)
     assert np.isnan(cross)
 
 
-def test_single_agent_profile_removes_only_the_pairs_that_touch_it():
+def test_single_agent_profile_removes_only_the_pairs_that_touch_it() -> None:
     df, caption, justification, _ = _synthetic_corpus(images=("img_a",))
     profiles, profile_index = _profile_index(df)
     lonely = int(profile_index[0])
@@ -260,7 +267,7 @@ def test_single_agent_profile_removes_only_the_pairs_that_touch_it():
         ).all(axis=None)
 
 
-def test_frame_is_one_row_per_image_dimension_and_modality():
+def test_frame_is_one_row_per_image_dimension_and_modality() -> None:
     df, caption, justification, id_index = _synthetic_corpus()
     frame = compute_matched_factorial_similarity(df, caption, justification, id_index)
 
@@ -272,7 +279,7 @@ def test_frame_is_one_row_per_image_dimension_and_modality():
         assert counts.tolist() == [expected]
 
 
-def test_cache_round_trip_returns_an_identical_frame(tmp_path):
+def test_cache_round_trip_returns_an_identical_frame(tmp_path: Path) -> None:
     df, caption, justification, id_index = _synthetic_corpus()
     cache = tmp_path / "matched_factorial_persona_sim.csv"
 
@@ -287,17 +294,20 @@ def test_cache_round_trip_returns_an_identical_frame(tmp_path):
     pd.testing.assert_frame_equal(first, second, check_dtype=False)
 
 
-def test_matched_columns_exclude_the_exploratory_reference():
+def test_matched_columns_exclude_the_exploratory_reference() -> None:
     assert "ci_relation_to_exploratory_reference" not in MATCHED_FACTORIAL_COLUMNS
     assert "stars" not in MATCHED_FACTORIAL_COLUMNS
     assert "marginal_delta" in MATCHED_FACTORIAL_COLUMNS
     assert "matched_to_marginal_ratio" in MATCHED_FACTORIAL_COLUMNS
 
 
-def test_default_seed_namespace_reproduces_the_frozen_within_cross_key():
+def test_default_seed_namespace_reproduces_the_frozen_within_cross_key() -> None:
     for dimension in DEMO_COLS:
         for modality in MODALITIES:
             explicit = stable_seed_sequence(42, "within_cross", dimension, modality)
-            assert list(explicit.entropy) == list(
-                stable_seed_sequence(42, "within_cross", dimension, modality).entropy
+            assert list(cast("Sequence[int]", explicit.entropy)) == list(
+                cast(
+                    "Sequence[int]",
+                    stable_seed_sequence(42, "within_cross", dimension, modality).entropy,
+                )
             )
