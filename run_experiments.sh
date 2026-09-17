@@ -101,7 +101,7 @@ if [[ $RUN_ALL -eq 1 ]]; then
     if [[ -f "data/${ALL_T0_MODELS[0]}/annotations_baseline.jsonl" ]]; then
         ./scripts/03_t0_ablation.sh || fail "T=0 ablation failed"
     else
-        stamp "      SKIPPED: data/${ALL_T0_MODELS[0]}/ not present (T=0 corpora are optional)"
+        stamp "      SKIPPED: data/${ALL_T0_MODELS[0]}/annotations_baseline.jsonl not present (T=0 corpora are optional; ./scripts/09_hub.sh pull --groups corpora)"
     fi
 
     stamp "[5/7] Summary figures"
@@ -143,7 +143,7 @@ die()  { echo "ERROR: $*" >&2; exit 1; }
 
 log "Model: $MODEL"
 [[ -f "data/$MODEL/annotations_baseline.jsonl" ]] \
-    || die "data/$MODEL/annotations_baseline.jsonl not found. Copy the corpus into data/$MODEL/ first."
+    || die "data/$MODEL/annotations_baseline.jsonl not found. Run ./scripts/09_hub.sh pull --groups corpora, or copy the corpus into data/$MODEL/."
 
 if [[ $FORCE -eq 1 ]]; then
     log "WARNING: --force set. Removing embedding, similarity, and topic caches for $MODEL..."

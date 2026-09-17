@@ -39,7 +39,7 @@ require_uv() {
 require_corpus() {
     local model="$1"
     [[ -f "data/$model/annotations_baseline.jsonl" ]] \
-        || die "data/$model/annotations_baseline.jsonl not found. See README (Downloading the datasets)."
+        || die "data/$model/annotations_baseline.jsonl not found. Run ./scripts/09_hub.sh pull --groups corpora (README: Downloading the datasets)."
 }
 
 run_step() {
