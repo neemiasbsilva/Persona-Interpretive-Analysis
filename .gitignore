@@ -32,11 +32,13 @@ docs/
 # Run logs, written by the scripts/ entry points under outputs/<model>/logs/.
 logs/
 
-# data/ and outputs/ are tracked except what is too large for git: the persona
-# corpora and the two embedding caches per paper model, about 90 MB each, both
-# published on the Hugging Face Hub and restored by ./scripts/09_hub.sh pull,
-# and the BERTopic pickles, which are regenerable and never published.
-data/**/annotations_baseline.jsonl
+# The annotation corpora live on the Hugging Face Hub, not in git: data/<model>/
+# keeps only a .gitkeep, and ./scripts/09_hub.sh pull fills it.
+data/**/*.jsonl
+
+# outputs/ is tracked except the two embedding caches per paper model, about 90 MB
+# each, published on the Hub and restored by pull, and the BERTopic pickles, which
+# are regenerable and never published.
 outputs/*/caption_embeddings.npy
 outputs/*/justification_embeddings.npy
 outputs/**/*.pkl
