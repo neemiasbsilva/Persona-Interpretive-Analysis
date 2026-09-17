@@ -10,7 +10,7 @@ from .config import EMBED_BATCH_SIZE, EMBED_MODEL
 
 def _validate_id_alignment(
     id_df: pd.DataFrame,
-    expected_ids: list | None = None,
+    expected_ids: list[str] | None = None,
 ) -> None:
     """Validate the ordered row identifiers stored beside an embedding cache."""
     if "annotation_id" not in id_df.columns:
@@ -26,7 +26,7 @@ def _validate_id_alignment(
 def _validate_embedding_alignment(
     embs: np.ndarray,
     id_df: pd.DataFrame,
-    expected_ids: list | None = None,
+    expected_ids: list[str] | None = None,
 ) -> None:
     """Fail if an embedding matrix and its row-ID sidecar can drift apart."""
     _validate_id_alignment(id_df, expected_ids)
@@ -42,7 +42,7 @@ def _validate_embedding_alignment(
 
 
 def load_or_encode(
-    texts: list,
+    texts: list[str],
     cache_path: Path,
     model_name: str = EMBED_MODEL,
     batch_size: int = EMBED_BATCH_SIZE,

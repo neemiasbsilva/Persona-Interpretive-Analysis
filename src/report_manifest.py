@@ -23,7 +23,7 @@ from .similarity import (
 def _write_method_manifest(
     path: Path,
     source_path: Path,
-    source_metadata: dict,
+    source_metadata: dict[str, object],
     *,
     stats: pd.DataFrame,
     contrast: pd.DataFrame,

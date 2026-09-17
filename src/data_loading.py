@@ -20,7 +20,7 @@ def load_annotations(path: Path = DATA_PATH) -> pd.DataFrame:
     return df
 
 
-def _parse_demo(val: object) -> dict:
+def _parse_demo(val: object) -> dict[str, object]:
     if isinstance(val, dict):
         return val
     if not isinstance(val, str):

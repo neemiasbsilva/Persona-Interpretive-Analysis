@@ -1,6 +1,7 @@
 """Paired inference on image-level differences: Wilcoxon, BCa, sign test, BH."""
 
 import hashlib
+from typing import Any
 
 import numpy as np
 
@@ -93,7 +94,7 @@ def paired_stats(
     rng: int | np.random.SeedSequence | np.random.Generator = 42,
     n_boot: int = N_BOOT,
     wilcoxon_resamples: int = N_WILCOXON_RESAMPLES,
-) -> dict:
+) -> dict[str, Any]:
     """Paired comparison of two per-image vectors.
 
     The already-computed difference is passed to a two-sided Wilcoxon test to

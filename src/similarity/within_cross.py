@@ -120,7 +120,9 @@ def validate_similarity_inputs(
     return cap_embs, just_embs
 
 
-def _read_valid_cache(cache_path: Path | None, input_metadata: dict) -> pd.DataFrame | None:
+def _read_valid_cache(
+    cache_path: Path | None, input_metadata: dict[str, object]
+) -> pd.DataFrame | None:
     """Return the cached within/cross frame when it is present and trustworthy.
 
     Args:
@@ -152,7 +154,7 @@ def compute_within_cross_similarity(
     cap_embs: np.ndarray,
     just_embs: np.ndarray,
     id_index: dict[str, int],
-    demo_cols: list = DEMO_COLS,
+    demo_cols: list[str] = DEMO_COLS,
     *,
     cache_path: Path | None = None,
     allow_missing_embeddings: bool = False,
@@ -217,16 +219,17 @@ def compute_within_cross_similarity(
             for i in range(len(idxs)):
                 for j in range(i + 1, len(idxs)):
                     same = labels[i] == labels[j]
+                    tags_i, tags_j = tag_sets[i], tag_sets[j]
                     if same:
                         within_cap.append(sim_cap[i, j])
                         within_just.append(sim_just[i, j])
-                        if tag_sets[i] is not None and tag_sets[j] is not None:
-                            within_jac.append(jaccard(tag_sets[i], tag_sets[j], on_empty_union=0.0))
+                        if tags_i is not None and tags_j is not None:
+                            within_jac.append(jaccard(tags_i, tags_j, on_empty_union=0.0))
                     else:
                         cross_cap.append(sim_cap[i, j])
                         cross_just.append(sim_just[i, j])
-                        if tag_sets[i] is not None and tag_sets[j] is not None:
-                            cross_jac.append(jaccard(tag_sets[i], tag_sets[j], on_empty_union=0.0))
+                        if tags_i is not None and tags_j is not None:
+                            cross_jac.append(jaccard(tags_i, tags_j, on_empty_union=0.0))
 
             for modality, within, cross in [
                 ("caption", within_cap, cross_cap),

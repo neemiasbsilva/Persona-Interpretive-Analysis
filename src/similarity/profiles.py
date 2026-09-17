@@ -3,6 +3,7 @@
 import ast
 from itertools import combinations
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -99,7 +100,7 @@ def compute_image_conditioned_profile_sim(
     cap_cache: Path | None = None,
     just_cache: Path | None = None,
     labs_cache: Path | None = None,
-) -> tuple[np.ndarray, np.ndarray, list]:
+) -> tuple[np.ndarray, np.ndarray, list[str]]:
     """24x24 image-conditioned cross-profile cosine similarity matrix.
 
     For each profile pair (p1, p2), compute cosine similarity between their
@@ -135,11 +136,12 @@ def compute_image_conditioned_profile_sim(
     profiles = sorted(df["profile"].unique())
     n = len(profiles)
 
-    cap_by = {p: {} for p in profiles}
-    just_by = {p: {} for p in profiles}
-    cap_diag_vals = {p: [] for p in profiles}
-    just_diag_vals = {p: [] for p in profiles}
-    for (prof, img), grp in df.groupby(["profile", "image_id"]):
+    cap_by: dict[str, dict[str, np.ndarray]] = {p: {} for p in profiles}
+    just_by: dict[str, dict[str, np.ndarray]] = {p: {} for p in profiles}
+    cap_diag_vals: dict[str, list[float]] = {p: [] for p in profiles}
+    just_diag_vals: dict[str, list[float]] = {p: [] for p in profiles}
+    for key, grp in df.groupby(["profile", "image_id"]):
+        prof, img = cast("tuple[str, str]", key)
         aids = [a for a in grp["annotation_id"].tolist() if a in id_index]
         if not aids:
             continue

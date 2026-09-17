@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -20,8 +21,8 @@ def within_cross_cache_metadata_path(cache_path: Path) -> Path:
 
 def validate_within_cross_cache_metadata(
     cache_path: Path,
-    expected: dict | None = None,
-) -> dict:
+    expected: dict[str, object] | None = None,
+) -> dict[str, Any]:
     """Validate cache policy, content digest, and optional input provenance."""
     cache_path = Path(cache_path)
     metadata_path = within_cross_cache_metadata_path(cache_path)
@@ -48,10 +49,10 @@ def within_cross_input_metadata(
     cap_embs: np.ndarray,
     just_embs: np.ndarray,
     id_index: dict[str, int],
-    demo_cols: list,
+    demo_cols: list[str],
     *,
     allow_missing_embeddings: bool,
-) -> dict:
+) -> dict[str, object]:
     """Fingerprint every input a within/cross cache entry depends on.
 
     Args:
