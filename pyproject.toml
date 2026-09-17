@@ -15,7 +15,15 @@ dependencies = [
     "umap-learn>=0.5",
     "hdbscan>=0.8",
     "scipy>=1.17.0",
+    "huggingface-hub>=1.4.1",
+    "hf-xet>=1.3.1",
 ]
+
+[project.urls]
+Homepage = "https://neemiasbsilva.github.io/Persona-Interpretive-Analysis-Portfolio/"
+Repository = "https://github.com/neemiasbsilva/Persona-Interpretive-Analysis"
+Dataset = "https://huggingface.co/datasets/MInDS-lab-UTFPR/UrbanPersona-120K-Interpretive"
+"Annotation pipeline" = "https://github.com/neemiasbsilva/MLLMs-persona-evaluation"
 
 [build-system]
 requires = ["hatchling"]
