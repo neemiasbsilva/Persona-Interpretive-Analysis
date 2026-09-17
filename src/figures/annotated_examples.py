@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import textwrap
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -337,7 +337,7 @@ def _find_examples(model: str, full_labels: list[str]) -> dict[str, list[dict[st
     def txt_perc(r: pd.Series) -> str:
         return "; ".join(sorted(r.tagset))
 
-    by_profile = dict(df.groupby("midx"))
+    by_profile = cast("dict[int, pd.DataFrame]", dict(df.groupby("midx")))
 
     return {
         "caption": _caption_example(df, cell_mat["caption"], sim_cap),

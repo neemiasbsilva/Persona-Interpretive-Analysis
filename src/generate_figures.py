@@ -14,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
@@ -92,6 +93,8 @@ def _figure_topic_persona_heatmap(piv_n: pd.DataFrame) -> None:
     ax.tick_params(axis="x", rotation=90, labelsize=15, pad=1)
     ax.tick_params(axis="y", rotation=0, labelsize=15, pad=1)
     cbar = ax.collections[0].colorbar
+    if cbar is None:
+        raise RuntimeError("seaborn heatmap did not attach a colour bar")
     cbar.ax.tick_params(labelsize=HEATMAP_CBAR_TICK_FONT)
     cbar.set_label("Topic proportion", fontsize=HEATMAP_CBAR_FONT)
     plt.tight_layout()
@@ -235,12 +238,10 @@ def _figure_persona_topic_tsne(piv_n: pd.DataFrame) -> None:
     legend_handles = [
         mpatches.Patch(color=econ_colors["High"], label="High income"),
         mpatches.Patch(color=econ_colors["Low"], label="Low income"),
-        plt.Line2D(
+        Line2D(
             [0], [0], marker="^", color="gray", markersize=9, linestyle="", label="Conservative"
         ),
-        plt.Line2D(
-            [0], [0], marker="o", color="gray", markersize=9, linestyle="", label="Progressive"
-        ),
+        Line2D([0], [0], marker="o", color="gray", markersize=9, linestyle="", label="Progressive"),
     ]
     ax.legend(handles=legend_handles, fontsize=10, loc="best")
     ax.set_xlabel("t-SNE dim 1")
@@ -334,6 +335,8 @@ def _figure_profile_matrix(
     ax.tick_params(axis="x", rotation=90, labelsize=HEATMAP_TICK_FONT)
     ax.tick_params(axis="y", rotation=0, labelsize=HEATMAP_TICK_FONT)
     cbar = ax.collections[0].colorbar
+    if cbar is None:
+        raise RuntimeError("seaborn heatmap did not attach a colour bar")
     cbar.ax.tick_params(labelsize=HEATMAP_CBAR_TICK_FONT)
     cbar.set_label(cbar_label, fontsize=HEATMAP_CBAR_FONT)
     plt.tight_layout()

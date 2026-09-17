@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -23,7 +24,7 @@ def _effect_table(model: str) -> pd.DataFrame:
     from the reported numbers.
     """
     d = pd.read_csv(outputs_dir(model) / "within_cross_persona_sim.csv")
-    stats = run_within_cross_significance(d, demo_cols=DIMS, modalities=MODALITIES)
+    stats = run_within_cross_significance(d, demo_cols=DIMS, modalities=tuple(MODALITIES))
     return stats.rename(columns={"ci_lo": "lo", "ci_hi": "hi", "p_wilcoxon": "p"})
 
 
@@ -126,19 +127,21 @@ def figure_topic_contrasts(model_a: str, model_b: str, out_dir: Path) -> None:
         gridspec_kw={"wspace": 0.55, "hspace": 0.35},
     )
     for col, model in enumerate((model_a, model_b)):
-        labels = (
+        labels = cast(
+            "dict[int, str]",
             pd.read_csv(outputs_dir(model) / "topic_labels_just.csv")
             .set_index("topic")["label"]
-            .to_dict()
+            .to_dict(),
         )
         d = _topic_demo(model)
         d = d[d.just_topic.isin(labels)]
         coverage = _labeled_coverage(model, labels)
+        topics = list(labels)
         for row, (dim, pos, neg) in enumerate(TOPIC_CONTRASTS):
             ax = axes[row, col]
             pa = d[d[dim] == pos].just_topic.value_counts(normalize=True)
             pb = d[d[dim] == neg].just_topic.value_counts(normalize=True)
-            diff = (pa.reindex(labels).fillna(0) - pb.reindex(labels).fillna(0)) * 100
+            diff = (pa.reindex(topics).fillna(0) - pb.reindex(topics).fillna(0)) * 100
             diff = diff.sort_values()
             names = [labels[t] for t in diff.index]
             colors = ["#CC6677" if v > 0 else "#4477AA" for v in diff.to_numpy()]
