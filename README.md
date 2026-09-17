@@ -20,10 +20,10 @@
 
 ---
 
-> **Note:** the paper has been accepted at the EMNLP 2026 Workshop on Pluralistic AI & NLP
-> (PANDORA). This repository is not the final release yet: it is still being updated while we
-> prepare the camera-ready version of the paper, so the code, the results and this documentation
-> may change until then.
+> **Note:** the paper has been accepted at the EMNLP 2026 Workshop on Pluralistic AI & NLP:
+> Diversity-aware, Sociotechnical, Responsible Alignment (PANDORA). This repository is not the
+> final release yet: it is still being updated while we prepare the camera-ready version of the
+> paper, so the code, the results and this documentation may change until then.
 
 ---
 
