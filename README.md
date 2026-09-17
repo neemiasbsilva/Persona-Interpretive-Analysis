@@ -121,7 +121,10 @@ side by side. Each model's corpus lives under `data/<model>/` (e.g. `qwen-vl`,
 `outputs/<model>/` and `figures/<model>/`. The active model is selected via `PERSONA_MODEL`
 (default `qwen-vl`).
 
-Files required to reproduce the experiments:
+No corpus is tracked in git: in a fresh clone each `data/<model>/` holds only a `.gitkeep`, and
+`./scripts/09_hub.sh pull --groups corpora` fills it (see
+[Downloading the datasets](#downloading-the-datasets)). Files required to reproduce the
+experiments:
 
 - `data/<model>/annotations_baseline.jsonl`: persona-conditioned annotations.
 - `data/<model>/annotations_no_persona_think.jsonl`: no-persona baseline, reasoning enabled.
@@ -129,8 +132,8 @@ Files required to reproduce the experiments:
 - `data/<model>/annotation_failures.jsonl`: the persona attempts whose JSON never parsed, with an
   `error` field and empty content fields; published for the attempt count, not read by the analysis.
 - `data/qwen-vl-t0/t0_economic_status_*.jsonl`, `data/gemma4-t0/t0_economic_status_*.jsonl`:
-  byte-identical copies of the `T=0` corpora under the annotation pipeline's original names;
-  tracked, but not published.
+  byte-identical copies of the `T=0` corpora under the annotation pipeline's original names, left
+  by older checkouts; neither tracked nor published.
 - `data/perceptsent-raw/`: original PerceptSent metadata and annotations, for human
   ground-truth agreement (shared across models).
 
@@ -188,7 +191,7 @@ Artifacts to quote in `paper.tex`:
 submission, and is never committed.
 
 `outputs/<model>/caption_embeddings.npy` and `justification_embeddings.npy` (~88 MB each)
-are gitignored like the baseline corpora, and regenerate on the first run of
+are gitignored like the corpora, and regenerate on the first run of
 `./run_experiments.sh <model>`, or come back with `./scripts/09_hub.sh pull --groups embeddings`.
 Every smaller cache in `outputs/<model>/` is committed, so
 statistics and figures rebuild without re-encoding.
