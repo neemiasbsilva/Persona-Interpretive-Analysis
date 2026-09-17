@@ -1,8 +1,7 @@
+# Python bytecode, packaging output and tool caches, all rebuilt on demand.
 __pycache__/
 *.py[cod]
 *.pyo
-.venv/
-.env
 *.egg-info/
 dist/
 build/
@@ -10,20 +9,45 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# The uv-managed environment and local secrets.
+.venv/
+.env
+
+# Editor, OS and agent settings, and the pre-commit hook this clone points
+# core.hooksPath at.
+.DS_Store
+.vscode/
+.claude/
+.githooks/
+
+# Drafts and working notes that never leave this checkout: paper.tex and every
+# other LaTeX file, the appendix drafts, docs/, and the artifact manifest that
+# tools/snapshot_artifacts.py records in .baseline/.
+*.tex
+Appendixes/
+docs/
 .baseline/
-outputs/**/*.pkl
+
+# Run logs, written by the scripts/ entry points under outputs/<model>/logs/.
+logs/
+
+# data/ and outputs/ are tracked except what is too large for git: the persona
+# corpora and the two embedding caches per paper model, about 90 MB each, both
+# published on the Hugging Face Hub and restored by ./scripts/09_hub.sh pull,
+# and the BERTopic pickles, which are regenerable and never published.
 data/**/annotations_baseline.jsonl
+outputs/*/caption_embeddings.npy
+outputs/*/justification_embeddings.npy
+outputs/**/*.pkl
+
+# PerceptSent images and model weights, obtained from their own sources.
 data/raw_images/
 *.pt
 *.bin
 *.safetensors
-.DS_Store
-logs/
-.claude/
-.githooks/
-.vscode/
-Appendixes/
-docs/
-*.tex
-outputs/*/caption_embeddings.npy
-outputs/*/justification_embeddings.npy
+
+# The Hugging Face staging tree, rebuilt by ./scripts/09_hub.sh build, with its
+# upload record and what pull downloads. Anchored, so it never matches the
+# src/hub package.
+/hub/
